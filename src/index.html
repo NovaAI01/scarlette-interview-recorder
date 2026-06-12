@@ -1,0 +1,2378 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#b3383a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Scarlette Recorder">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/icons/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
+  <title>Scarlette Interview Recorder</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5e6a75;
+      --line: #d8dee5;
+      --line-strong: #b9c3cf;
+      --brand: #b3383a;
+      --brand-dark: #8e2a2c;
+      --teal: #1f6b5d;
+      --teal-dark: #174f45;
+      --amber: #9a650e;
+      --amber-bg: #fff3d7;
+      --danger: #b42125;
+      --danger-bg: #ffe8e8;
+      --ok-bg: #e8f5ef;
+      --shadow: 0 12px 30px rgba(23, 32, 42, 0.08);
+      --radius: 8px;
+      --tap: 48px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100%;
+      margin: 0;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.45;
+      letter-spacing: 0;
+      background:
+        linear-gradient(180deg, #ffffff 0, rgba(255, 255, 255, 0) 240px),
+        var(--bg);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app-shell {
+      width: min(100%, 760px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 0 14px calc(26px + env(safe-area-inset-bottom));
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: calc(12px + env(safe-area-inset-top)) 0 12px;
+      background: rgba(244, 246, 248, 0.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(216, 222, 229, 0.82);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      position: relative;
+      display: grid;
+      flex: 0 0 38px;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--brand) 0 55%, var(--teal) 55% 100%);
+      box-shadow: 0 7px 18px rgba(179, 56, 58, 0.22);
+    }
+
+    .brand-mark span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .brand-subtitle {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .support-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .support-pill.ok {
+      color: var(--teal-dark);
+      border-color: #a9d5c7;
+      background: var(--ok-bg);
+    }
+
+    .support-pill.bad {
+      color: var(--danger);
+      border-color: #f0b7b7;
+      background: var(--danger-bg);
+    }
+
+    main {
+      padding: 16px 0 0;
+    }
+
+    .screen-title {
+      margin: 0;
+      font-size: 1.55rem;
+      line-height: 1.12;
+      font-weight: 850;
+    }
+
+    .screen-lede {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .section-head {
+      margin: 0 0 14px;
+    }
+
+    .card,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 16px;
+    }
+
+    .template-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .template-card {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .template-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .template-title {
+      margin: 0;
+      font-size: 1.08rem;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+
+    .template-desc {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .count-pill,
+    .mini-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: var(--teal-dark);
+      border: 1px solid #acd5ca;
+      background: #edf8f4;
+      font-size: 0.78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .mini-pill.warn {
+      color: var(--amber);
+      border-color: #ebca86;
+      background: var(--amber-bg);
+    }
+
+    .mini-pill.danger {
+      color: var(--danger);
+      border-color: #f0b7b7;
+      background: var(--danger-bg);
+    }
+
+    .template-action {
+      justify-self: stretch;
+    }
+
+    .notice {
+      display: grid;
+      gap: 6px;
+      padding: 12px 14px;
+      border: 1px solid #ebca86;
+      border-radius: var(--radius);
+      color: #4f370c;
+      background: var(--amber-bg);
+      font-size: 0.92rem;
+    }
+
+    .notice strong {
+      color: #3f2a06;
+    }
+
+    .notice.danger {
+      color: #5c1014;
+      border-color: #f0b7b7;
+      background: var(--danger-bg);
+    }
+
+    .notice.ok {
+      color: var(--teal-dark);
+      border-color: #a9d5c7;
+      background: var(--ok-bg);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      color: var(--ink);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      min-height: var(--tap);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      padding: 12px;
+      color: var(--ink);
+      background: #ffffff;
+      outline: none;
+    }
+
+    .field textarea {
+      min-height: 116px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(31, 107, 93, 0.14);
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--tap);
+      min-width: var(--tap);
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      color: var(--ink);
+      border: 1px solid var(--line-strong);
+      background: #ffffff;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .button:hover {
+      border-color: #8f9aaa;
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+    }
+
+    .button.primary {
+      color: #ffffff;
+      border-color: var(--teal);
+      background: var(--teal);
+    }
+
+    .button.primary:hover {
+      border-color: var(--teal-dark);
+      background: var(--teal-dark);
+    }
+
+    .button.record {
+      color: #ffffff;
+      border-color: var(--brand);
+      background: var(--brand);
+    }
+
+    .button.record:hover {
+      border-color: var(--brand-dark);
+      background: var(--brand-dark);
+    }
+
+    .button.stop {
+      color: #ffffff;
+      border-color: var(--danger);
+      background: var(--danger);
+    }
+
+    .button.ghost {
+      color: var(--muted);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .button.small {
+      min-height: 40px;
+      padding: 9px 12px;
+      font-size: 0.88rem;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .bottom-bar {
+      position: sticky;
+      bottom: 0;
+      z-index: 18;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 18px -14px calc(-26px - env(safe-area-inset-bottom));
+      padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 -12px 26px rgba(23, 32, 42, 0.08);
+    }
+
+    .bottom-bar.three {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .bottom-bar.single {
+      grid-template-columns: 1fr;
+    }
+
+    .progress-wrap {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 12px 0;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e0e6ec;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--brand));
+      transition: width 160ms ease;
+    }
+
+    .question-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .question-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .question-text {
+      margin: 0;
+      font-size: 1.35rem;
+      line-height: 1.22;
+      font-weight: 850;
+    }
+
+    .evidence-panel {
+      display: grid;
+      gap: 18px;
+    }
+
+    .evidence-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    .evidence-heading {
+      margin: 0;
+      color: var(--ink);
+      font-size: 0.94rem;
+      line-height: 1.25;
+      font-weight: 850;
+    }
+
+    .main-response textarea {
+      min-height: 170px;
+    }
+
+    .followup-fields {
+      display: grid;
+      gap: 14px;
+    }
+
+    .followup-answer {
+      display: grid;
+      gap: 8px;
+    }
+
+    .followup-answer label {
+      color: #34414e;
+      font-size: 0.94rem;
+      line-height: 1.3;
+      font-weight: 800;
+    }
+
+    .followup-answer textarea {
+      min-height: 108px;
+    }
+
+    .recorder-panel {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfd;
+    }
+
+    .recording-live {
+      border-color: #f0b7b7;
+      background: #fff7f7;
+    }
+
+    .recording-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .status-dot {
+      flex: 0 0 11px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #96a1ad;
+    }
+
+    .status-dot.ready {
+      background: var(--teal);
+    }
+
+    .status-dot.live {
+      background: var(--danger);
+      box-shadow: 0 0 0 6px rgba(180, 33, 37, 0.12);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.22);
+      }
+    }
+
+    .timer {
+      flex: 0 0 auto;
+      min-width: 62px;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: #ffffff;
+      font-variant-numeric: tabular-nums;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    audio {
+      width: 100%;
+      min-height: 44px;
+    }
+
+    .audio-empty {
+      padding: 12px;
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius);
+      color: var(--muted);
+      background: #ffffff;
+      font-size: 0.92rem;
+    }
+
+    .additional-notes textarea {
+      min-height: 132px;
+    }
+
+    .review-actions {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr;
+    }
+
+    .warnings-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .warnings-list li {
+      padding: 10px 12px;
+      border: 1px solid #ebca86;
+      border-radius: var(--radius);
+      color: #4f370c;
+      background: var(--amber-bg);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .review-card {
+      display: grid;
+      gap: 12px;
+      padding: 15px;
+    }
+
+    .review-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .review-question {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.3;
+      font-weight: 850;
+    }
+
+    .review-evidence {
+      display: grid;
+      gap: 12px;
+    }
+
+    .review-section {
+      display: grid;
+      gap: 7px;
+    }
+
+    .review-section-title {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .review-text {
+      min-height: 54px;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: #34414e;
+      background: #f8fafc;
+      white-space: pre-wrap;
+    }
+
+    .review-text.empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .review-followups {
+      display: grid;
+      gap: 10px;
+    }
+
+    .review-followup {
+      display: grid;
+      gap: 6px;
+    }
+
+    .review-followup-prompt {
+      margin: 0;
+      color: #34414e;
+      font-size: 0.92rem;
+      line-height: 1.3;
+      font-weight: 850;
+    }
+
+    .meta-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfd;
+    }
+
+    .meta-item strong {
+      color: var(--ink);
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .empty-state {
+      padding: 16px;
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius);
+      color: var(--muted);
+      background: #ffffff;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (min-width: 720px) {
+      .app-shell {
+        padding-right: 18px;
+        padding-left: 18px;
+      }
+
+      .template-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .form-grid.two {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      .review-actions {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .bottom-bar {
+        margin-right: -18px;
+        margin-left: -18px;
+        padding-right: 18px;
+        padding-left: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand" aria-label="Scarlette Interview Recorder">
+        <div class="brand-mark" aria-hidden="true"><span>SR</span></div>
+        <div class="brand-text">
+          <p class="brand-title">Scarlette Recorder</p>
+          <p class="brand-subtitle">Business discovery evidence capture</p>
+        </div>
+      </div>
+      <div id="supportStatus" class="support-pill">Checking support</div>
+    </header>
+    <main id="app" aria-live="polite"></main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "scarlette.interviewRecorder.session.v1";
+
+    const templates = [
+      {
+        id: "hr-discovery",
+        title: "HR Discovery",
+        description: "Internal admin, chasing, duplication, and staff time evidence.",
+        questions: [
+          {
+            id: "hr-1",
+            section: "Staff time",
+            question: "What process or task consumes more staff time than you think it should?",
+            followUps: [
+              "Who is involved?",
+              "How often does it happen?",
+              "What happens when it goes wrong?",
+              "How much time does it consume?"
+            ]
+          },
+          {
+            id: "hr-2",
+            section: "Chasing",
+            question: "What do people have to chase most often?",
+            followUps: [
+              "Who gets chased?",
+              "What gets delayed?",
+              "How often does this happen?",
+              "What happens if it is missed?"
+            ]
+          },
+          {
+            id: "hr-3",
+            section: "Duplication",
+            question: "What information gets entered or copied into multiple systems?",
+            followUps: [
+              "Where is it first entered?",
+              "Where is it copied to?",
+              "Who does the copying?",
+              "What problems does duplication cause?"
+            ]
+          },
+          {
+            id: "hr-4",
+            section: "Back-and-forth",
+            question: "What creates the most back-and-forth emails or phone calls?",
+            followUps: [
+              "Who is usually involved?",
+              "What triggers the back-and-forth?",
+              "How long does it usually take to resolve?",
+              "What information is usually missing?"
+            ]
+          },
+          {
+            id: "hr-5",
+            section: "Admin removal",
+            question: "If you could completely remove one internal admin task tomorrow, what would it be?",
+            followUps: [
+              "Why that task?",
+              "Who would benefit most?",
+              "How often does it happen?",
+              "What would improve if it disappeared?"
+            ]
+          }
+        ]
+      },
+      {
+        id: "shop-floor-discovery",
+        title: "Shop Floor Discovery",
+        description: "Delays, materials, handovers, rework, and interruptions.",
+        questions: [
+          {
+            id: "shop-1",
+            section: "Delays",
+            question: "Where do jobs most often wait longer than they should on the shop floor?",
+            followUps: [
+              "What is the job waiting for?",
+              "Who usually notices the delay first?",
+              "How often does this happen?",
+              "What does the delay stop next?"
+            ]
+          },
+          {
+            id: "shop-2",
+            section: "Missing materials",
+            question: "What materials, tools, or information are most often missing when work is ready to start?",
+            followUps: [
+              "How do people find out something is missing?",
+              "Who has to resolve it?",
+              "How long does it usually take?",
+              "What work is affected while people wait?"
+            ]
+          },
+          {
+            id: "shop-3",
+            section: "Job handovers",
+            question: "What details are most likely to be lost or unclear during a job handover?",
+            followUps: [
+              "Which teams or shifts are involved?",
+              "Where should the handover information live?",
+              "How are questions handled afterwards?",
+              "What happens when the handover is incomplete?"
+            ]
+          },
+          {
+            id: "shop-4",
+            section: "Rework",
+            question: "What type of rework happens often enough that people expect it?",
+            followUps: [
+              "What usually causes the rework?",
+              "Who approves or records it?",
+              "How much time does it add?",
+              "How does it affect the customer or schedule?"
+            ]
+          },
+          {
+            id: "shop-5",
+            section: "Interruptions",
+            question: "What interrupts operators most during a normal shift?",
+            followUps: [
+              "Who or what causes the interruption?",
+              "What information is being requested?",
+              "How often does it happen?",
+              "What would let the operator continue without stopping?"
+            ]
+          }
+        ]
+      },
+      {
+        id: "manager-discovery",
+        title: "Manager Discovery",
+        description: "Visibility, reporting, bottlenecks, approvals, and communication.",
+        questions: [
+          {
+            id: "manager-1",
+            section: "Visibility",
+            question: "What do you wish you could see clearly without asking someone for an update?",
+            followUps: [
+              "Who currently holds that information?",
+              "How often do you need it?",
+              "Where do you look first?",
+              "What decisions are delayed without it?"
+            ]
+          },
+          {
+            id: "manager-2",
+            section: "Reporting",
+            question: "Which reports take the most effort to prepare or check?",
+            followUps: [
+              "Who prepares them?",
+              "What systems feed into them?",
+              "What has to be corrected manually?",
+              "Who relies on the report?"
+            ]
+          },
+          {
+            id: "manager-3",
+            section: "Bottlenecks",
+            question: "Where does work most often get stuck between teams or stages?",
+            followUps: [
+              "What is usually waiting for a decision or action?",
+              "How do people know it is stuck?",
+              "Who escalates it?",
+              "What is the impact when it stays stuck?"
+            ]
+          },
+          {
+            id: "manager-4",
+            section: "Approvals",
+            question: "Which approvals slow the business down more than they should?",
+            followUps: [
+              "Who needs to approve them?",
+              "What information is needed before approval?",
+              "How are reminders handled?",
+              "What happens when approval is late?"
+            ]
+          },
+          {
+            id: "manager-5",
+            section: "Department communication",
+            question: "What communication between departments causes the most confusion or repeated questions?",
+            followUps: [
+              "Which departments are involved?",
+              "What is usually misunderstood?",
+              "Where is the conversation recorded?",
+              "What would make the message unambiguous?"
+            ]
+          }
+        ]
+      },
+      {
+        id: "maintenance-discovery",
+        title: "Maintenance Discovery",
+        description: "Downtime, repeat faults, repair logs, parts, and response times.",
+        questions: [
+          {
+            id: "maintenance-1",
+            section: "Downtime",
+            question: "Which machines or assets create the most disruptive downtime?",
+            followUps: [
+              "What usually triggers the downtime?",
+              "Who is affected first?",
+              "How is downtime recorded?",
+              "What is the knock-on impact?"
+            ]
+          },
+          {
+            id: "maintenance-2",
+            section: "Repeat faults",
+            question: "What faults keep coming back after they have already been repaired?",
+            followUps: [
+              "How often do they repeat?",
+              "What repair is usually attempted?",
+              "Who knows the history of the fault?",
+              "What evidence would help diagnose it faster?"
+            ]
+          },
+          {
+            id: "maintenance-3",
+            section: "Repair logging",
+            question: "What repair details are most often missing, late, or hard to find?",
+            followUps: [
+              "Who records the repair?",
+              "When is the log updated?",
+              "Where do people look for the history?",
+              "What happens when the log is incomplete?"
+            ]
+          },
+          {
+            id: "maintenance-4",
+            section: "Parts availability",
+            question: "Which parts or consumables cause the most delay when maintenance work is needed?",
+            followUps: [
+              "How do people check availability?",
+              "Who orders or approves the part?",
+              "How often is stock wrong?",
+              "What workaround is used when the part is not available?"
+            ]
+          },
+          {
+            id: "maintenance-5",
+            section: "Response times",
+            question: "Where do maintenance requests take longer to respond to than the business expects?",
+            followUps: [
+              "How are requests raised?",
+              "Who receives them first?",
+              "What information is missing at the start?",
+              "How is urgency decided?"
+            ]
+          }
+        ]
+      }
+    ];
+
+    const app = document.getElementById("app");
+    const supportStatus = document.getElementById("supportStatus");
+
+    let screen = "templates";
+    let session = null;
+    let activeEditIndex = null;
+    let recorderMessage = "";
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let mediaChunks = [];
+    let activeQuestionIndex = null;
+    let activeStartedMs = 0;
+    let timerId = null;
+
+    boot();
+
+    function boot() {
+      loadSession();
+      registerServiceWorker();
+      updateSupportStatus();
+      render();
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      document.addEventListener("click", handleClick);
+      document.addEventListener("input", handleInput);
+    }
+
+    function render() {
+      updateSupportStatus();
+      if (!session) {
+        screen = "templates";
+      }
+
+      if (screen === "details" && session) {
+        app.innerHTML = renderDetails();
+        return;
+      }
+
+      if (screen === "question" && session) {
+        app.innerHTML = renderQuestion();
+        return;
+      }
+
+      if (screen === "review" && session) {
+        app.innerHTML = renderReview();
+        return;
+      }
+
+      app.innerHTML = renderTemplates();
+    }
+
+    function renderTemplates() {
+      const saved = session ? `
+        <section class="notice ok">
+          <strong>Saved session ready</strong>
+          <span>${escapeHtml(getTemplate().title)} for ${escapeHtml(session.details.businessName || "Unnamed business")} is saved at question ${Number(session.currentQuestionIndex || 0) + 1} of ${session.answers.length}.</span>
+          <div class="button-row">
+            <button class="button primary small" data-action="resume-session">Resume session</button>
+            <button class="button small" data-action="clear-session">Clear session</button>
+          </div>
+        </section>
+      ` : "";
+
+      return `
+        <section class="stack">
+          <div class="section-head">
+            <h1 class="screen-title">Interview templates</h1>
+            <p class="screen-lede">Capture full spoken answers and structured evidence for workflow discovery.</p>
+          </div>
+          ${saved}
+          ${renderStorageNotice()}
+          <div class="template-grid">
+            ${templates.map(template => `
+              <article class="card template-card">
+                <div class="template-top">
+                  <div>
+                    <h2 class="template-title">${escapeHtml(template.title)}</h2>
+                    <p class="template-desc">${escapeHtml(template.description)}</p>
+                  </div>
+                  <span class="count-pill">${template.questions.length} questions</span>
+                </div>
+                <button class="button primary template-action" data-action="select-template" data-template-id="${template.id}">Select template</button>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderDetails() {
+      const template = getTemplate();
+      const details = session.details;
+      return `
+        <section class="stack">
+          <div class="section-head">
+            <h1 class="screen-title">${escapeHtml(template.title)}</h1>
+            <p class="screen-lede">${escapeHtml(template.description)}</p>
+          </div>
+          ${renderStorageNotice()}
+          <section class="panel">
+            <div class="section-head">
+              <h2 class="template-title">Interview details</h2>
+            </div>
+            <form id="detailsForm" class="form-grid two">
+              ${renderInput("Business name", "businessName", details.businessName, "text", true)}
+              ${renderInput("Department", "department", details.department, "text", false)}
+              ${renderInput("Person spoken to", "person", details.person, "text", false)}
+              ${renderInput("Role", "role", details.role, "text", false)}
+              ${renderInput("Interview date/time", "interviewDateTime", details.interviewDateTime, "datetime-local", true)}
+              <div class="field full">
+                <label for="interviewerNotes">Interviewer notes</label>
+                <textarea id="interviewerNotes" data-detail="interviewerNotes" placeholder="Context, location, or anything to remember before the interview starts.">${escapeHtml(details.interviewerNotes || "")}</textarea>
+              </div>
+            </form>
+          </section>
+          <div class="bottom-bar">
+            <button class="button" data-action="back-to-templates">Templates</button>
+            <button class="button primary" data-action="start-interview">Start interview</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderQuestion() {
+      const template = getTemplate();
+      const index = clampQuestionIndex(session.currentQuestionIndex);
+      const answer = session.answers[index];
+      const recording = answer.recording || emptyRecording();
+      const live = isRecording() && activeQuestionIndex === index;
+      const questionNumber = index + 1;
+      const total = session.answers.length;
+      const progress = Math.round((questionNumber / total) * 100);
+      const canRecord = supportsRecording();
+      const status = getRecordingStatus(answer, index);
+      const actionLabel = recording.blob || recording.startedAt ? "Re-record answer" : "Record answer";
+
+      return `
+        <section class="stack">
+          ${renderProgress(questionNumber, total, progress, template.title)}
+          ${renderStorageNotice()}
+          <article class="panel question-panel">
+            <div class="question-kicker">
+              <span>${escapeHtml(answer.section)}</span>
+              <span>Question ${questionNumber} of ${total}</span>
+            </div>
+            <h1 class="question-text">${escapeHtml(answer.question)}</h1>
+          </article>
+
+          <section class="recorder-panel ${live ? "recording-live" : ""}">
+            <div class="recording-head">
+              <div class="status-line">
+                <span class="status-dot ${live ? "live" : status.dotClass}" aria-hidden="true"></span>
+                <span>${escapeHtml(live ? "Recording in progress" : status.label)}</span>
+              </div>
+              <div id="recordingTimer" class="timer">${escapeHtml(live ? formatDuration(getLiveDuration()) : formatDuration(recording.durationSeconds || 0))}</div>
+            </div>
+            ${!canRecord ? `<div class="notice danger"><strong>Recording unsupported</strong><span>This browser does not expose MediaRecorder and microphone capture together.</span></div>` : ""}
+            ${recorderMessage ? `<div class="notice danger"><strong>Recording error</strong><span>${escapeHtml(recorderMessage)}</span></div>` : ""}
+            <div class="button-row">
+              <button class="button record" data-action="start-recording" ${live || !canRecord ? "disabled" : ""}>${escapeHtml(actionLabel)}</button>
+              <button class="button stop" data-action="stop-recording" ${live ? "" : "disabled"}>Stop recording</button>
+            </div>
+            ${renderAudioPlayback(answer, index)}
+          </section>
+
+          <section class="panel evidence-panel">
+            <div class="field main-response">
+              <label for="mainResponse">Main Response</label>
+              <textarea id="mainResponse" data-answer-index="${index}" data-evidence-field="mainResponse" placeholder="Capture the full answer or dictated summary here.">${escapeHtml(answer.mainResponse || "")}</textarea>
+            </div>
+
+            <div class="evidence-block">
+              <h2 class="evidence-heading">Follow-up Answers</h2>
+              <div class="followup-fields">
+                ${answer.followUpAnswers.map((item, followUpIndex) => `
+                  <div class="followup-answer">
+                    <label for="followUpAnswer${followUpIndex}">${escapeHtml(item.prompt)}</label>
+                    <textarea id="followUpAnswer${followUpIndex}" data-answer-index="${index}" data-follow-up-index="${followUpIndex}" placeholder="Answer / evidence...">${escapeHtml(item.response || "")}</textarea>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+
+            <div class="field additional-notes">
+              <label for="additionalNotes">Additional Notes</label>
+              <textarea id="additionalNotes" data-answer-index="${index}" data-evidence-field="notes" placeholder="Context, observations, names, systems, or follow-up actions.">${escapeHtml(answer.notes || "")}</textarea>
+            </div>
+          </section>
+
+          <div class="bottom-bar">
+            <button class="button" data-action="prev-question" ${index === 0 ? "disabled" : ""}>Previous</button>
+            <button class="button primary" data-action="${index === total - 1 ? "go-review" : "next-question"}">${index === total - 1 ? "Review" : "Next"}</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderReview() {
+      const template = getTemplate();
+      const warnings = buildWarnings();
+      const recorded = session.answers.filter(answer => answer.recording && answer.recording.blob).length;
+      const metadataOnly = session.answers.filter(answer => answer.recording && !answer.recording.blob && answer.recording.startedAt).length;
+      return `
+        <section class="stack">
+          ${renderProgress(session.answers.length, session.answers.length, 100, `${template.title} review`)}
+          ${renderStorageNotice()}
+          <section class="panel">
+            <div class="section-head">
+              <h1 class="screen-title">Review evidence</h1>
+              <p class="screen-lede">${recorded} audio file${recorded === 1 ? "" : "s"} available in this browser. ${metadataOnly ? `${metadataOnly} recording metadata entr${metadataOnly === 1 ? "y is" : "ies are"} missing audio after reload.` : ""}</p>
+            </div>
+            <div class="meta-grid">
+              ${renderMeta("Template", template.title)}
+              ${renderMeta("Business", session.details.businessName || "Not set")}
+              ${renderMeta("Department", session.details.department || "Not set")}
+              ${renderMeta("Person", session.details.person || "Not set")}
+              ${renderMeta("Role", session.details.role || "Not set")}
+              ${renderMeta("Interview time", formatDateTimeDisplay(session.details.interviewDateTime))}
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <h2 class="template-title">Missing evidence warnings</h2>
+            </div>
+            ${warnings.length ? `<ul class="warnings-list">${warnings.map(warning => `<li>${escapeHtml(warning)}</li>`).join("")}</ul>` : `<div class="empty-state">No missing evidence warnings.</div>`}
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <h2 class="template-title">Export session</h2>
+            </div>
+            <div class="review-actions">
+              <button class="button primary" data-action="export-json">Export JSON</button>
+              <button class="button primary" data-action="export-markdown">Export Markdown</button>
+              <button class="button" data-action="download-all-audio">Download all audio</button>
+              <button class="button" data-action="clear-session">Clear session</button>
+            </div>
+          </section>
+
+          <section class="stack">
+            ${session.answers.map((answer, index) => renderReviewAnswer(answer, index)).join("")}
+          </section>
+
+          <div class="bottom-bar">
+            <button class="button" data-action="back-to-question">Back to questions</button>
+            <button class="button primary" data-action="download-all-audio">Download audio</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderReviewAnswer(answer, index) {
+      const status = getRecordingStatus(answer, index);
+      const isEditing = activeEditIndex === index;
+      const warnings = buildAnswerWarnings(answer, index);
+      return `
+        <article class="card review-card">
+          <div class="review-title-row">
+            <div>
+              <div class="question-kicker">
+                <span>${escapeHtml(answer.section)}</span>
+                <span>Question ${index + 1}</span>
+              </div>
+              <h3 class="review-question">${escapeHtml(answer.question)}</h3>
+            </div>
+            <span class="mini-pill ${status.pillClass}">${escapeHtml(status.label)}</span>
+          </div>
+          ${warnings.length ? `<ul class="warnings-list">${warnings.map(warning => `<li>${escapeHtml(warning)}</li>`).join("")}</ul>` : ""}
+          ${renderAudioPlayback(answer, index)}
+          <div class="review-evidence">
+            <div class="question-kicker">
+              <span>Structured answers</span>
+              <button class="button small" data-action="${isEditing ? "finish-edit-note" : "edit-note"}" data-index="${index}">${isEditing ? "Done" : "Edit evidence"}</button>
+            </div>
+            ${isEditing ? renderReviewEvidenceEditor(answer, index) : renderReviewEvidenceSummary(answer)}
+          </div>
+          <div class="button-row">
+            <button class="button small" data-action="jump-question" data-index="${index}">Open question</button>
+            <button class="button small" data-action="download-audio" data-index="${index}" ${answer.recording && answer.recording.blob ? "" : "disabled"}>Download audio</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderReviewEvidenceSummary(answer) {
+      return `
+        <div class="review-section">
+          <p class="review-section-title">Main Response</p>
+          <div class="review-text ${answer.mainResponse ? "" : "empty"}">${escapeHtml(answer.mainResponse || "No main response captured yet.")}</div>
+        </div>
+        <div class="review-section">
+          <p class="review-section-title">Follow-up Answers</p>
+          <div class="review-followups">
+            ${answer.followUpAnswers.map(item => `
+              <div class="review-followup">
+                <p class="review-followup-prompt">${escapeHtml(item.prompt)}</p>
+                <div class="review-text ${item.response ? "" : "empty"}">${escapeHtml(item.response || "No answer captured yet.")}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+        <div class="review-section">
+          <p class="review-section-title">Additional Notes</p>
+          <div class="review-text ${answer.notes ? "" : "empty"}">${escapeHtml(answer.notes || "No additional notes captured yet.")}</div>
+        </div>
+      `;
+    }
+
+    function renderReviewEvidenceEditor(answer, index) {
+      return `
+        <div class="field main-response">
+          <label for="reviewMainResponse${index}">Main Response</label>
+          <textarea id="reviewMainResponse${index}" data-answer-index="${index}" data-evidence-field="mainResponse" aria-label="Edit main response for question ${index + 1}">${escapeHtml(answer.mainResponse || "")}</textarea>
+        </div>
+        <div class="evidence-block">
+          <h4 class="evidence-heading">Follow-up Answers</h4>
+          <div class="followup-fields">
+            ${answer.followUpAnswers.map((item, followUpIndex) => `
+              <div class="followup-answer">
+                <label for="reviewFollowUpAnswer${index}-${followUpIndex}">${escapeHtml(item.prompt)}</label>
+                <textarea id="reviewFollowUpAnswer${index}-${followUpIndex}" data-answer-index="${index}" data-follow-up-index="${followUpIndex}" aria-label="Edit follow-up answer ${followUpIndex + 1} for question ${index + 1}">${escapeHtml(item.response || "")}</textarea>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+        <div class="field additional-notes">
+          <label for="reviewAdditionalNotes${index}">Additional Notes</label>
+          <textarea id="reviewAdditionalNotes${index}" data-answer-index="${index}" data-evidence-field="notes" aria-label="Edit additional notes for question ${index + 1}">${escapeHtml(answer.notes || "")}</textarea>
+        </div>
+      `;
+    }
+
+    function renderInput(label, key, value, type, required) {
+      return `
+        <div class="field">
+          <label for="${key}">${escapeHtml(label)}</label>
+          <input id="${key}" data-detail="${key}" type="${type}" value="${escapeAttr(value || "")}" ${required ? "required" : ""}>
+        </div>
+      `;
+    }
+
+    function renderMeta(label, value) {
+      return `<div class="meta-item"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+    }
+
+    function renderProgress(current, total, progress, label) {
+      return `
+        <div class="progress-wrap" aria-label="Interview progress">
+          <div class="progress-meta">
+            <span>${escapeHtml(label)}</span>
+            <span>${current} / ${total}</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: ${progress}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStorageNotice() {
+      return `
+        <section class="notice">
+          <strong>Save/export before closing</strong>
+          <span>Structured evidence and recording metadata are stored locally. Audio blobs are held only by this browser session and should be downloaded before closing or reloading.</span>
+        </section>
+      `;
+    }
+
+    function renderAudioPlayback(answer, index) {
+      const recording = answer.recording || emptyRecording();
+      if (recording.objectUrl && recording.blob) {
+        return `
+          <div class="stack">
+            <audio controls src="${escapeAttr(recording.objectUrl)}"></audio>
+            <div class="button-row">
+              <button class="button small" data-action="download-audio" data-index="${index}">Download audio</button>
+            </div>
+          </div>
+        `;
+      }
+
+      if (recording.startedAt && !recording.blob) {
+        return `<div class="audio-empty">Recording metadata exists, but the audio file is not available after reload. Re-record or use an audio file exported before closing.</div>`;
+      }
+
+      return `<div class="audio-empty">No audio recorded for this question.</div>`;
+    }
+
+    function handleClick(event) {
+      const button = event.target.closest("[data-action]");
+      if (!button) {
+        return;
+      }
+
+      const action = button.dataset.action;
+      const index = button.dataset.index ? Number(button.dataset.index) : null;
+
+      if (action === "select-template") {
+        createSession(button.dataset.templateId);
+        screen = "details";
+        persistSession();
+        render();
+        return;
+      }
+
+      if (action === "resume-session") {
+        screen = session ? screenForSession() : "templates";
+        render();
+        return;
+      }
+
+      if (action === "clear-session") {
+        clearSessionWithConfirmation();
+        return;
+      }
+
+      if (action === "back-to-templates") {
+        if (confirm("Changing templates will clear this interview session. Continue?")) {
+          clearSession(false);
+          render();
+        }
+        return;
+      }
+
+      if (action === "start-interview") {
+        const form = document.getElementById("detailsForm");
+        if (form && !form.reportValidity()) {
+          return;
+        }
+        session.currentQuestionIndex = clampQuestionIndex(session.currentQuestionIndex || 0);
+        screen = "question";
+        persistSession();
+        render();
+        return;
+      }
+
+      if (action === "prev-question") {
+        moveQuestion(-1);
+        return;
+      }
+
+      if (action === "next-question") {
+        moveQuestion(1);
+        return;
+      }
+
+      if (action === "go-review") {
+        if (blockIfRecording()) {
+          return;
+        }
+        screen = "review";
+        persistSession();
+        render();
+        return;
+      }
+
+      if (action === "back-to-question") {
+        screen = "question";
+        session.currentQuestionIndex = clampQuestionIndex(session.currentQuestionIndex);
+        persistSession();
+        render();
+        return;
+      }
+
+      if (action === "jump-question") {
+        if (blockIfRecording()) {
+          return;
+        }
+        session.currentQuestionIndex = clampQuestionIndex(index);
+        activeEditIndex = null;
+        screen = "question";
+        persistSession();
+        render();
+        return;
+      }
+
+      if (action === "start-recording") {
+        startRecording(session.currentQuestionIndex);
+        return;
+      }
+
+      if (action === "stop-recording") {
+        stopRecording();
+        return;
+      }
+
+      if (action === "download-audio") {
+        downloadAudio(index);
+        return;
+      }
+
+      if (action === "download-all-audio") {
+        downloadAllAudio();
+        return;
+      }
+
+      if (action === "export-json") {
+        exportJson();
+        return;
+      }
+
+      if (action === "export-markdown") {
+        exportMarkdown();
+        return;
+      }
+
+      if (action === "edit-note") {
+        activeEditIndex = index;
+        render();
+        return;
+      }
+
+      if (action === "finish-edit-note") {
+        activeEditIndex = null;
+        persistSession();
+        render();
+      }
+    }
+
+    function handleInput(event) {
+      if (!session) {
+        return;
+      }
+
+      const detailKey = event.target.dataset.detail;
+      if (detailKey) {
+        session.details[detailKey] = event.target.value;
+        persistSession();
+        return;
+      }
+
+      const answerIndex = event.target.dataset.answerIndex;
+      const evidenceField = event.target.dataset.evidenceField;
+      if (answerIndex !== undefined && evidenceField) {
+        const answer = session.answers[Number(answerIndex)];
+        if (answer && (evidenceField === "mainResponse" || evidenceField === "notes")) {
+          answer[evidenceField] = event.target.value;
+          persistSession();
+        }
+        return;
+      }
+
+      const followUpIndex = event.target.dataset.followUpIndex;
+      if (answerIndex !== undefined && followUpIndex !== undefined) {
+        const answer = session.answers[Number(answerIndex)];
+        const followUpAnswer = answer && answer.followUpAnswers[Number(followUpIndex)];
+        if (followUpAnswer) {
+          followUpAnswer.response = event.target.value;
+          persistSession();
+        }
+      }
+    }
+
+    function createSession(templateId) {
+      const template = templates.find(item => item.id === templateId) || templates[0];
+      revokeObjectUrls();
+      session = {
+        id: `sir-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        templateId: template.id,
+        startedAt: new Date().toISOString(),
+        currentQuestionIndex: 0,
+        details: {
+          businessName: "Spooner Metals",
+          department: "",
+          person: "",
+          role: "",
+          interviewDateTime: nowForDateTimeInput(),
+          interviewerNotes: ""
+        },
+        answers: template.questions.map(question => ({
+          questionId: question.id,
+          section: question.section,
+          question: question.question,
+          mainResponse: "",
+          followUpAnswers: question.followUps.map(prompt => ({
+            prompt,
+            response: ""
+          })),
+          notes: "",
+          recording: emptyRecording()
+        }))
+      };
+    }
+
+    async function startRecording(index) {
+      if (!supportsRecording()) {
+        recorderMessage = "This browser does not support the MediaRecorder API with microphone capture.";
+        render();
+        return;
+      }
+
+      if (isRecording()) {
+        recorderMessage = "Stop the current recording before starting another one.";
+        render();
+        return;
+      }
+
+      const answer = session.answers[index];
+      const currentRecording = answer.recording || emptyRecording();
+      if ((currentRecording.blob || currentRecording.startedAt) && !confirm("This will replace the existing recording for this question. Continue?")) {
+        return;
+      }
+
+      recorderMessage = "";
+
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (error) {
+        recorderMessage = permissionErrorMessage(error);
+        render();
+        return;
+      }
+
+      const preferredMimeType = chooseMimeType();
+      try {
+        mediaRecorder = preferredMimeType
+          ? new MediaRecorder(mediaStream, { mimeType: preferredMimeType })
+          : new MediaRecorder(mediaStream);
+      } catch (error) {
+        try {
+          mediaRecorder = new MediaRecorder(mediaStream);
+        } catch (fallbackError) {
+          stopMediaStream();
+          recorderMessage = "Recording could not start in this browser.";
+          render();
+          return;
+        }
+      }
+
+      if (currentRecording.objectUrl) {
+        URL.revokeObjectURL(currentRecording.objectUrl);
+      }
+
+      mediaChunks = [];
+      activeQuestionIndex = index;
+      activeStartedMs = Date.now();
+      const startedAt = new Date().toISOString();
+      const mimeType = mediaRecorder.mimeType || preferredMimeType || "audio/webm";
+      answer.recording = {
+        blob: null,
+        objectUrl: "",
+        mimeType,
+        startedAt,
+        stoppedAt: "",
+        durationSeconds: 0,
+        filename: makeAudioFilename(answer, index, mimeType),
+        persistedMetadataOnly: false
+      };
+
+      mediaRecorder.addEventListener("dataavailable", event => {
+        if (event.data && event.data.size > 0) {
+          mediaChunks.push(event.data);
+        }
+      });
+
+      mediaRecorder.addEventListener("stop", () => {
+        finishRecording(index);
+      }, { once: true });
+
+      mediaRecorder.start();
+      timerId = window.setInterval(updateTimerDisplay, 300);
+      persistSession();
+      render();
+    }
+
+    function stopRecording() {
+      if (!isRecording()) {
+        return;
+      }
+
+      try {
+        mediaRecorder.requestData();
+      } catch (error) {
+        // Some browsers do not allow requestData at this point.
+      }
+      mediaRecorder.stop();
+    }
+
+    function finishRecording(index) {
+      const answer = session && session.answers[index];
+      if (!answer) {
+        cleanupRecorder();
+        return;
+      }
+
+      const recording = answer.recording || emptyRecording();
+      const stoppedAt = new Date().toISOString();
+      const durationSeconds = Math.max(1, Math.round((Date.now() - activeStartedMs) / 1000));
+      const blob = new Blob(mediaChunks, { type: recording.mimeType || "audio/webm" });
+
+      recording.blob = blob;
+      recording.objectUrl = URL.createObjectURL(blob);
+      recording.stoppedAt = stoppedAt;
+      recording.durationSeconds = durationSeconds;
+      recording.persistedMetadataOnly = false;
+      answer.recording = recording;
+
+      cleanupRecorder();
+      persistSession();
+      render();
+    }
+
+    function cleanupRecorder() {
+      if (timerId) {
+        window.clearInterval(timerId);
+      }
+      timerId = null;
+      mediaRecorder = null;
+      mediaChunks = [];
+      activeQuestionIndex = null;
+      activeStartedMs = 0;
+      stopMediaStream();
+    }
+
+    function stopMediaStream() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+      }
+      mediaStream = null;
+    }
+
+    function moveQuestion(offset) {
+      if (blockIfRecording()) {
+        return;
+      }
+      const next = clampQuestionIndex(session.currentQuestionIndex + offset);
+      session.currentQuestionIndex = next;
+      recorderMessage = "";
+      persistSession();
+      render();
+    }
+
+    function blockIfRecording() {
+      if (!isRecording()) {
+        return false;
+      }
+      alert("Stop the current recording before leaving this question.");
+      return true;
+    }
+
+    function clearSessionWithConfirmation() {
+      if (blockIfRecording()) {
+        return;
+      }
+      if (confirm("Clear this interview session? Recordings and evidence in this browser will be removed.")) {
+        clearSession(true);
+      }
+    }
+
+    function clearSession(shouldRender) {
+      revokeObjectUrls();
+      session = null;
+      screen = "templates";
+      activeEditIndex = null;
+      recorderMessage = "";
+      localStorage.removeItem(STORAGE_KEY);
+      if (shouldRender) {
+        render();
+      }
+    }
+
+    function persistSession() {
+      if (!session) {
+        return;
+      }
+
+      const payload = {
+        screen,
+        session: sanitizeSession(session)
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        recorderMessage = "Local browser storage is full or unavailable. Export now to keep the session metadata.";
+      }
+    }
+
+    function loadSession() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          return;
+        }
+        const payload = JSON.parse(raw);
+        if (!payload || !payload.session) {
+          return;
+        }
+        session = normalizeSession(payload.session);
+        screen = ["details", "question", "review"].includes(payload.screen) ? payload.screen : screenForSession();
+      } catch (error) {
+        session = null;
+        screen = "templates";
+      }
+    }
+
+    function sanitizeSession(source) {
+      const template = templates.find(item => item.id === source.templateId) || templates[0];
+      return {
+        id: source.id,
+        templateId: source.templateId,
+        startedAt: source.startedAt,
+        currentQuestionIndex: source.currentQuestionIndex || 0,
+        details: Object.assign({}, source.details),
+        answers: source.answers.map((answer, index) => {
+          const recording = answer.recording || emptyRecording();
+          const templateQuestion = template.questions[index] || {};
+          return {
+            questionId: answer.questionId,
+            section: answer.section,
+            question: answer.question,
+            mainResponse: answer.mainResponse || "",
+            followUpAnswers: normalizeFollowUpAnswers(templateQuestion, answer),
+            notes: answer.notes || "",
+            recording: {
+              blob: null,
+              objectUrl: "",
+              mimeType: recording.mimeType || "",
+              startedAt: recording.startedAt || "",
+              stoppedAt: recording.stoppedAt || "",
+              durationSeconds: recording.durationSeconds || 0,
+              filename: recording.filename || "",
+              persistedMetadataOnly: Boolean(recording.startedAt)
+            }
+          };
+        })
+      };
+    }
+
+    function normalizeSession(source) {
+      const template = templates.find(item => item.id === source.templateId) || templates[0];
+      const answers = template.questions.map((question, index) => {
+        const saved = source.answers && source.answers[index] ? source.answers[index] : {};
+        const recording = saved.recording || {};
+        const hasRecordingMetadata = Boolean(recording.startedAt || recording.filename || recording.durationSeconds);
+        return {
+          questionId: question.id,
+          section: question.section,
+          question: question.question,
+          mainResponse: saved.mainResponse || "",
+          followUpAnswers: normalizeFollowUpAnswers(question, saved),
+          notes: saved.notes || "",
+          recording: {
+            blob: null,
+            objectUrl: "",
+            mimeType: recording.mimeType || "",
+            startedAt: recording.startedAt || "",
+            stoppedAt: recording.stoppedAt || "",
+            durationSeconds: recording.durationSeconds || 0,
+            filename: recording.filename || "",
+            persistedMetadataOnly: hasRecordingMetadata
+          }
+        };
+      });
+
+      return {
+        id: source.id || `sir-${Date.now()}`,
+        templateId: template.id,
+        startedAt: source.startedAt || new Date().toISOString(),
+        currentQuestionIndex: clamp(source.currentQuestionIndex || 0, 0, answers.length - 1),
+        details: Object.assign({
+          businessName: "Spooner Metals",
+          department: "",
+          person: "",
+          role: "",
+          interviewDateTime: nowForDateTimeInput(),
+          interviewerNotes: ""
+        }, source.details || {}),
+        answers
+      };
+    }
+
+    function normalizeFollowUpAnswers(question, saved) {
+      const source = saved || {};
+      const templatePrompts = Array.isArray(question.followUps) ? question.followUps.slice() : [];
+      const savedItems = Array.isArray(source.followUpAnswers) ? source.followUpAnswers : [];
+      const legacyPrompts = Array.isArray(source.followUps) ? source.followUps.slice() : [];
+      const prompts = templatePrompts.length
+        ? templatePrompts
+        : (savedItems.length ? savedItems.map(item => item && item.prompt).filter(Boolean) : legacyPrompts);
+      const savedByPrompt = new Map();
+
+      savedItems.forEach(item => {
+        if (item && typeof item.prompt === "string" && !savedByPrompt.has(item.prompt)) {
+          savedByPrompt.set(item.prompt, item);
+        }
+      });
+
+      return prompts.map((prompt, index) => {
+        const promptText = String(prompt || "");
+        const promptMatch = savedByPrompt.get(promptText);
+        const indexMatch = savedItems[index];
+        const response = promptMatch && typeof promptMatch.response === "string"
+          ? promptMatch.response
+          : (indexMatch && typeof indexMatch.response === "string" ? indexMatch.response : "");
+
+        return {
+          prompt: promptText,
+          response
+        };
+      });
+    }
+
+    function exportJson() {
+      const data = buildExportData();
+      const filename = `${sessionFileBase()}_metadata.json`;
+      downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), filename);
+    }
+
+    function exportMarkdown() {
+      const data = buildExportData();
+      const lines = [];
+      lines.push(`# ${data.template} interview`);
+      lines.push("");
+      lines.push(`- Session ID: ${data.sessionId}`);
+      lines.push(`- Business: ${data.business}`);
+      lines.push(`- Department: ${data.department || "Not set"}`);
+      lines.push(`- Person: ${data.person || "Not set"}`);
+      lines.push(`- Role: ${data.role || "Not set"}`);
+      lines.push(`- Interview date/time: ${data.interviewDateTime || "Not set"}`);
+      lines.push(`- Exported at: ${data.exportedAt}`);
+      lines.push("");
+      lines.push("> Audio files are not embedded in this Markdown export. Download available audio files separately before closing or reloading the browser.");
+      lines.push("");
+      if (data.interviewerNotes) {
+        lines.push("## Interviewer notes");
+        lines.push("");
+        lines.push(data.interviewerNotes);
+        lines.push("");
+      }
+      data.answers.forEach((answer, index) => {
+        lines.push(`## Question ${index + 1} \u2014 ${answer.section}`);
+        lines.push("");
+        lines.push(`Question: ${answer.question}`);
+        lines.push("");
+        lines.push(`- Template: ${answer.template}`);
+        lines.push(`- Business: ${answer.business || "Not set"}`);
+        lines.push(`- Department: ${answer.department || "Not set"}`);
+        lines.push(`- Person: ${answer.person || "Not set"}`);
+        lines.push(`- Role: ${answer.role || "Not set"}`);
+        lines.push(`- Recording timestamp: ${answer.recordingTimestamp || "Not recorded"}`);
+        lines.push(`- Recording duration: ${answer.recordingDurationSeconds ? `${answer.recordingDurationSeconds} seconds` : "Not recorded"}`);
+        lines.push(`- Audio filename: ${answer.audioFilename || "No audio file available"}`);
+        lines.push("");
+        lines.push("### Main Response");
+        lines.push("");
+        lines.push(answer.mainResponse || "No main response captured.");
+        lines.push("");
+        lines.push("### Follow-up Answers");
+        lines.push("");
+        if (answer.followUpAnswers.length) {
+          answer.followUpAnswers.forEach(item => {
+            lines.push(`**${item.prompt}**`);
+            lines.push("");
+            lines.push(item.response || "No answer captured.");
+            lines.push("");
+          });
+        } else {
+          lines.push("No follow-up prompts.");
+          lines.push("");
+        }
+        lines.push("### Additional Notes");
+        lines.push("");
+        lines.push(answer.additionalNotes || "No additional notes captured.");
+        lines.push("");
+      });
+      downloadBlob(new Blob([lines.join("\n")], { type: "text/markdown" }), `${sessionFileBase()}_notes.md`);
+    }
+
+    function buildExportData() {
+      const template = getTemplate();
+      const details = session.details;
+      return {
+        sessionId: session.id,
+        template: template.title,
+        templateId: template.id,
+        business: details.businessName || "",
+        department: details.department || "",
+        person: details.person || "",
+        role: details.role || "",
+        interviewDateTime: details.interviewDateTime || "",
+        interviewerNotes: details.interviewerNotes || "",
+        startedAt: session.startedAt,
+        exportedAt: new Date().toISOString(),
+        audioStorageNotice: "Audio blobs are not stored in localStorage. Download audio files before closing or reloading the browser.",
+        answers: session.answers.map((answer, index) => {
+          const recording = answer.recording || emptyRecording();
+          return {
+            template: template.title,
+            business: details.businessName || "",
+            department: details.department || "",
+            person: details.person || "",
+            role: details.role || "",
+            questionId: answer.questionId,
+            questionNumber: index + 1,
+            section: answer.section,
+            question: answer.question,
+            mainResponse: answer.mainResponse || "",
+            followUpAnswers: answer.followUpAnswers.map(item => ({
+              prompt: item.prompt,
+              response: item.response || ""
+            })),
+            additionalNotes: answer.notes || "",
+            notes: answer.notes || "",
+            recordingTimestamp: recording.startedAt || "",
+            recordingStoppedAt: recording.stoppedAt || "",
+            recordingDurationSeconds: recording.durationSeconds || 0,
+            audioFilename: recording.filename || "",
+            recordingMimeType: recording.mimeType || "",
+            audioAvailableInCurrentBrowser: Boolean(recording.blob),
+            metadataOnlyAfterReload: Boolean(recording.startedAt && !recording.blob)
+          };
+        })
+      };
+    }
+
+    function downloadAudio(index) {
+      const answer = session.answers[index];
+      const recording = answer && answer.recording;
+      if (!recording || !recording.blob) {
+        alert("No audio file is available for this question in the current browser session.");
+        return;
+      }
+      downloadBlob(recording.blob, recording.filename || makeAudioFilename(answer, index, recording.mimeType));
+    }
+
+    function downloadAllAudio() {
+      const available = session.answers
+        .map((answer, index) => ({ answer, index }))
+        .filter(item => item.answer.recording && item.answer.recording.blob);
+
+      if (!available.length) {
+        alert("No audio files are available to download in the current browser session.");
+        return;
+      }
+
+      available.forEach((item, order) => {
+        window.setTimeout(() => downloadAudio(item.index), order * 450);
+      });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function buildWarnings() {
+      const warnings = [];
+      session.answers.forEach((answer, index) => {
+        buildAnswerWarnings(answer, index).forEach(warning => {
+          warnings.push(`Question ${index + 1}: ${warning}`);
+        });
+      });
+      return warnings;
+    }
+
+    function buildAnswerWarnings(answer) {
+      const warnings = [];
+      const recording = answer.recording || emptyRecording();
+      if (!answer.mainResponse || !answer.mainResponse.trim()) {
+        warnings.push("Main response is empty");
+      }
+      if (!recording.blob) {
+        warnings.push(recording.startedAt ? "Audio file is missing after reload" : "Recording is missing");
+      }
+      return warnings;
+    }
+
+    function getRecordingStatus(answer, index) {
+      const recording = answer.recording || emptyRecording();
+      if (isRecording() && activeQuestionIndex === index) {
+        return {
+          label: "Recording",
+          dotClass: "live",
+          pillClass: "danger"
+        };
+      }
+      if (recording.blob) {
+        return {
+          label: `Recorded ${formatDuration(recording.durationSeconds || 0)}`,
+          dotClass: "ready",
+          pillClass: ""
+        };
+      }
+      if (recording.startedAt) {
+        return {
+          label: "Metadata only",
+          dotClass: "",
+          pillClass: "warn"
+        };
+      }
+      return {
+        label: "No recording",
+        dotClass: "",
+        pillClass: "danger"
+      };
+    }
+
+    function updateSupportStatus() {
+      if (supportsRecording()) {
+        supportStatus.textContent = "Recording supported";
+        supportStatus.className = "support-pill ok";
+      } else {
+        supportStatus.textContent = "Recording unavailable";
+        supportStatus.className = "support-pill bad";
+      }
+    }
+
+    function isRecording() {
+      return mediaRecorder && mediaRecorder.state === "recording";
+    }
+
+    function supportsRecording() {
+      return Boolean(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    }
+
+    function registerServiceWorker() {
+      if (!("serviceWorker" in navigator)) {
+        return;
+      }
+
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("../service-worker.js").catch(error => {
+          console.warn("Scarlette service worker registration failed", error);
+        });
+      });
+    }
+
+    function chooseMimeType() {
+      if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) {
+        return "";
+      }
+      const options = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/aac"
+      ];
+      return options.find(type => MediaRecorder.isTypeSupported(type)) || "";
+    }
+
+    function permissionErrorMessage(error) {
+      if (error && (error.name === "NotAllowedError" || error.name === "PermissionDeniedError")) {
+        return "Microphone permission was denied. Allow microphone access in the browser and try again.";
+      }
+      if (error && error.name === "NotFoundError") {
+        return "No microphone was found for this device.";
+      }
+      return "Microphone access failed. Check browser permissions and try again.";
+    }
+
+    function handleBeforeUnload(event) {
+      if (isRecording()) {
+        event.preventDefault();
+        event.returnValue = "Stop the current recording before leaving.";
+        return event.returnValue;
+      }
+
+      if (hasAudioBlobs()) {
+        event.preventDefault();
+        event.returnValue = "Download audio recordings before closing. Audio blobs are not reliably restored after reload.";
+        return event.returnValue;
+      }
+      return undefined;
+    }
+
+    function hasAudioBlobs() {
+      return Boolean(session && session.answers.some(answer => answer.recording && answer.recording.blob));
+    }
+
+    function revokeObjectUrls() {
+      if (!session) {
+        return;
+      }
+      session.answers.forEach(answer => {
+        if (answer.recording && answer.recording.objectUrl) {
+          URL.revokeObjectURL(answer.recording.objectUrl);
+        }
+      });
+    }
+
+    function screenForSession() {
+      if (!session) {
+        return "templates";
+      }
+      if (!session.details || !session.details.businessName) {
+        return "details";
+      }
+      return screen === "review" ? "review" : "question";
+    }
+
+    function getTemplate() {
+      return templates.find(template => template.id === (session && session.templateId)) || templates[0];
+    }
+
+    function emptyRecording() {
+      return {
+        blob: null,
+        objectUrl: "",
+        mimeType: "",
+        startedAt: "",
+        stoppedAt: "",
+        durationSeconds: 0,
+        filename: "",
+        persistedMetadataOnly: false
+      };
+    }
+
+    function makeAudioFilename(answer, index, mimeType) {
+      const business = safeName(session.details.businessName || "business");
+      const template = safeName(getTemplate().title);
+      const question = `q${String(index + 1).padStart(2, "0")}`;
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      return `${business}_${template}_${question}_${stamp}.${extensionForMime(mimeType)}`;
+    }
+
+    function extensionForMime(mimeType) {
+      if (!mimeType) {
+        return "webm";
+      }
+      if (mimeType.includes("mp4")) {
+        return "m4a";
+      }
+      if (mimeType.includes("mpeg")) {
+        return "mp3";
+      }
+      if (mimeType.includes("wav")) {
+        return "wav";
+      }
+      if (mimeType.includes("aac")) {
+        return "aac";
+      }
+      return "webm";
+    }
+
+    function sessionFileBase() {
+      const datePart = (session.details.interviewDateTime || nowForDateTimeInput()).slice(0, 10);
+      return `${safeName(session.details.businessName || "business")}_${safeName(getTemplate().title)}_${datePart}`;
+    }
+
+    function safeName(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "file";
+    }
+
+    function nowForDateTimeInput() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      const local = new Date(now.getTime() - offset * 60000);
+      return local.toISOString().slice(0, 16);
+    }
+
+    function formatDateTimeDisplay(value) {
+      if (!value) {
+        return "Not set";
+      }
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+      return date.toLocaleString([], {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function formatDuration(seconds) {
+      const value = Math.max(0, Number(seconds) || 0);
+      const mins = Math.floor(value / 60);
+      const secs = Math.floor(value % 60);
+      return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+
+    function getLiveDuration() {
+      if (!activeStartedMs) {
+        return 0;
+      }
+      return Math.floor((Date.now() - activeStartedMs) / 1000);
+    }
+
+    function updateTimerDisplay() {
+      const timer = document.getElementById("recordingTimer");
+      if (timer) {
+        timer.textContent = formatDuration(getLiveDuration());
+      }
+    }
+
+    function clampQuestionIndex(index) {
+      if (!session || !session.answers.length) {
+        return 0;
+      }
+      return clamp(Number(index) || 0, 0, session.answers.length - 1);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, "&#096;");
+    }
+  </script>
+</body>
+</html>

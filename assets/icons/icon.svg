@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>Scarlette Interview Recorder</title>
+  <rect width="512" height="512" rx="96" fill="#f4f6f8"/>
+  <rect x="56" y="56" width="400" height="400" rx="86" fill="#b3383a"/>
+  <path d="M456 56v400H56L456 56Z" fill="#1f6b5d"/>
+  <rect x="112" y="112" width="288" height="288" rx="62" fill="#ffffff"/>
+  <path d="M183 303c15 13 36 20 62 20 35 0 56-14 56-37 0-20-14-31-49-39l-24-6c-51-12-76-38-76-78 0-48 40-80 99-80 38 0 69 11 92 33l-32 42c-17-14-37-21-60-21-28 0-45 12-45 33 0 18 14 29 48 37l25 6c52 13 77 38 77 79 0 50-41 84-109 84-43 0-78-12-105-37l41-36Z" fill="#17202a"/>
+</svg>
