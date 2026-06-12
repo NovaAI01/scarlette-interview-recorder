@@ -2,6 +2,8 @@
 
 This checklist verifies the static PWA manually. It covers the user access model in [Access Layer Standard](access_layer_standard.md), the privacy position in [Data Privacy](data_privacy.md), and the current v1 scope in [Product Brief](product_brief.md).
 
+This is the V1 prototype checklist. The planned V2 release checklist is defined in [V2 Test Strategy](v2_test_strategy.md).
+
 Use hosted HTTPS for final user verification. Localhost is acceptable for development verification.
 
 ## 1. Desktop Static Test

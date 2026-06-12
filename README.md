@@ -1,190 +1,129 @@
 # Scarlette Interview Recorder
 
-Scarlette Interview Recorder is a static Progressive Web App for capturing structured interview evidence during business workflow discovery.
+Scarlette Interview Recorder is a local-first Progressive Web App for capturing structured evidence during business workflow-discovery interviews.
 
-The app is designed for internal Scarlette discovery work. It prioritises reliable raw capture, local storage, review, and export. It does not add backend services, cloud transcription, AI extraction, scoring, proposal generation, or account-based storage.
+The current app is a working V1 static prototype. V2 architecture planning is now in progress; V2 is not yet implemented.
 
-## Live App
+## Current Status
 
-Live app URL:
+- Current implementation: V1 static PWA prototype.
+- Runtime model: static files only, no backend.
+- Main app file: [src/index.html](src/index.html).
+- V2 status: product reset and architecture foundation documented in [docs/](docs). V2 is not implemented or deployed yet.
+- Live app URL: https://novaai01.github.io/scarlette-interview-recorder/ for the current V1 prototype.
+- Screenshots: no verified screenshots are committed yet.
 
-```text
-TODO: add deployed HTTPS URL
-```
+## Current Prototype Capabilities
 
-Direct app path after deployment:
+The V1 prototype currently supports:
 
-```text
-/src/
-```
+- prepared discovery templates for HR, shop floor, manager, and maintenance workflows
+- structured fields for Main Response, Follow-up Answers, and Additional Notes
+- manual typing and phone keyboard dictation through normal textareas
+- browser speech recognition controls where `SpeechRecognition` or `webkitSpeechRecognition` is available
+- optional full-question MediaRecorder audio backup
+- local autosave of the active session in `localStorage`
+- review screen with missing main-response warnings
+- JSON and Markdown export
+- individual and batch download of audio blobs that still exist in the current browser session
+- PWA manifest and service worker for install/offline app shell behavior
 
-## Screenshot
+Important V1 limitations:
 
-Screenshot placeholder:
+- The app is mostly a single large HTML file.
+- `localStorage` stores only the active session, not a scalable archive.
+- Audio blobs are not reliably persisted across reloads.
+- iPhone browser speech recognition is not reliable enough to be a product dependency.
+- There is no explicit consent/capture acknowledgement stored before note or audio capture.
+- Service worker cache updates require careful verification to avoid stale installed copies.
 
-```text
-TODO: add current desktop and mobile screenshots after deployment verification.
-```
+## V2 Direction
 
-## Current Capabilities
+V2 will rebuild the product around reliable evidence capture and local archives.
 
-- Template-based discovery interviews for HR, shop floor, manager, and maintenance workflows.
-- Structured evidence fields for Main Response, Follow-up Answers, and Additional Notes.
-- Field-level browser dictation controls for editable evidence fields when `SpeechRecognition` or `webkitSpeechRecognition` is available.
-- Manual typing and device keyboard dictation fallback when browser speech recognition is unavailable.
-- Optional full-question MediaRecorder audio backup.
-- Local autosave of interview details, progress, structured evidence, dictated text, and recording metadata in `localStorage`.
-- Review screen with missing evidence warnings.
-- JSON and Markdown export.
-- Individual and batch download of available backup audio blobs.
-- Static PWA installation on supported desktop and mobile browsers.
-- Offline app shell after the first successful hosted load.
+V2 principles:
 
-## Deliberately Out Of Scope
+- Evidence first: capture raw evidence before analysis.
+- Local-first privacy: interview data stays on the user's device unless exported or deliberately shared.
+- PWA access: normal users open a hosted URL, install the PWA, and launch from the icon.
+- iPhone reliability: use native keyboard dictation inside textareas; do not rely on browser Web Speech API on iPhone.
+- Structured capture: every question supports main response, follow-up answers, notes, timestamps, metadata, and optional audio backup.
+- Scalable local storage: move interview evidence from `localStorage` to IndexedDB.
+- Professional engineering standard: docs, privacy, architecture, testing, and release checks are first-class deliverables.
 
-- Backend services, databases, accounts, authentication, and server-side storage.
-- Cloud transcription, AI transcription, AI extraction, scoring, summaries, or proposal generation.
-- Cross-device sync or account recovery.
-- Package managers, build tools, frameworks, Docker services, or long-running local processes for normal use.
-- Permanent storage of audio blobs after reload or browser close.
+V2 is not adding AI extraction, scoring, summaries, proposal generation, cloud sync, accounts, authentication, or backend storage.
 
-See [Product Brief](docs/product_brief.md) and [Roadmap](docs/roadmap.md) for the v1 product boundary.
+## Privacy Model
 
-## User Workflow
+The app is designed to be local-first.
 
-1. Open the hosted Scarlette Interview Recorder URL.
-2. Install the app if using it repeatedly on desktop or phone.
-3. Select the relevant discovery template.
-4. Enter interview details.
-5. Capture each question using structured evidence fields.
-6. Use field-level dictation where supported, or type/use keyboard dictation manually.
-7. Optionally record a full audio backup for the question.
-8. Review missing evidence warnings.
-9. Export JSON, Markdown, and any available backup audio before closing or reloading.
+The repository code and documentation may be public. Interview data is separate: it stays in the user's browser profile unless the user exports or shares it.
 
-## Install And Use
+Current V1 storage:
 
-### Desktop
+- interview details, structured text evidence, progress, and recording metadata are stored in the browser profile using `localStorage`
+- audio blobs are held in memory for the current browser session and should be downloaded before reload/close
 
-Use a browser with PWA installation support, such as Chrome, Edge, or Brave.
+Planned V2 storage:
 
-1. Open the hosted HTTPS URL.
-2. Use the browser install control, usually shown in the address bar or browser menu.
-3. Launch **Scarlette Interview Recorder** from the operating system application menu, dock, or launcher.
+- IndexedDB for sessions, structured answers, participants, templates, and optional audio blobs
+- schema versioning and migration support
+- export/import for deliberate backup or sharing
+- `localStorage` only for lightweight UI preferences if needed
 
-### iPhone
+The app does not upload interview content to a Scarlette backend. Browser storage is not guaranteed permanent; browser/site-data cleanup, private browsing limits, storage pressure, profile changes, or device policy can remove local data.
 
-Use Safari.
+Exported files are outside the app's control and should be handled according to the sensitivity of the interview. Browser, operating-system, and keyboard dictation processing behavior is also outside the app's control.
 
-1. Open the hosted HTTPS URL.
-2. Tap **Share**.
-3. Tap **Add to Home Screen**.
-4. Launch **Scarlette** from the Home Screen.
+See [docs/data_privacy.md](docs/data_privacy.md) and [docs/known_risks.md](docs/known_risks.md).
 
-If the browser does not expose Web Speech API dictation, tap inside the textarea and use the iPhone keyboard microphone dictation button.
+## Access Model
 
-### Android
+Normal users should not need:
 
-Use Chrome, Edge, or another browser with PWA installation support.
+- a terminal
+- localhost
+- port numbers
+- package commands
+- local servers
+- Docker
+- background services
 
-1. Open the hosted HTTPS URL.
-2. Use the browser install prompt or browser menu.
-3. Launch **Scarlette** from the Home Screen or app launcher.
+Normal use should be:
 
-## Field-Level Dictation
+Hosted HTTPS URL -> Install PWA -> Launch from icon.
 
-Every editable evidence textarea has its own dictation control:
+Local server use is for development and verification only.
 
-- Main Response
-- each Follow-up Answer
-- Additional Notes
+See [docs/access_layer_standard.md](docs/access_layer_standard.md).
 
-Support is detected with:
+## iPhone Input Guidance
 
-```js
-window.SpeechRecognition || window.webkitSpeechRecognition
-```
+For iPhone use, the preferred workflow is:
 
-When supported, **Start dictation** listens for the selected field only. Final recognized speech is appended to the existing textarea value, the text remains editable, and the updated field is persisted to `localStorage` immediately.
+1. Tap the relevant textarea.
+2. Use the native iPhone keyboard microphone.
+3. Edit the inserted text if needed.
+4. Continue through the structured fields.
 
-Starting dictation for another field stops the active field first. The active field is visually highlighted and the control changes to **Stop dictation**.
-
-When unsupported, the app shows:
-
-```text
-Speech-to-text is not supported in this browser. Use keyboard dictation or type manually.
-```
-
-All textareas remain usable manually.
-
-## Optional Full Audio Backup
-
-The MediaRecorder control is retained below the evidence fields as **Optional full audio backup**.
-
-This backup records the full-question audio for later reference. It is separate from structured evidence entry and is not required for export. Backup audio blobs are held in memory by the current browser session and should be downloaded before closing or reloading.
-
-## Privacy And Data Storage
-
-The application code may be public. Interview data is not sent to a Scarlette backend by this app.
-
-Stored locally in the browser profile:
-
-- interview details
-- selected template and current question
-- structured evidence fields
-- dictated text once inserted into textareas
-- recording metadata
-
-Not stored permanently by the app:
-
-- backup audio blob contents after browser reload or close
-- exported files after the browser hands them to the user
-
-Users are responsible for handling exported JSON, Markdown, and audio files according to the sensitivity of the interview.
-
-See [Data Privacy](docs/data_privacy.md) for the full privacy position.
-
-## Browser Limitations
-
-Field-level speech-to-text depends on browser support for Web Speech API recognition. Support varies by browser, device, installed PWA context, permissions, and network/runtime conditions. Browser speech recognition may be unavailable even when microphone recording is available.
-
-Optional backup audio recording requires:
-
-- HTTPS hosting, or localhost during development
-- `MediaRecorder`
-- `navigator.mediaDevices.getUserMedia`
-- microphone permission
-
-Offline mode applies to the cached app shell and local session metadata. It does not make unavailable browser speech recognition available, and it does not restore audio blobs after reload.
-
-## Access Layer
-
-Normal users should access Scarlette Interview Recorder through the hosted PWA. They should not need a terminal, local server, package manager, Docker, build command, or background service.
-
-Local server use is only for development and manual verification.
-
-See [Access Layer Standard](docs/access_layer_standard.md).
+Browser Web Speech API recognition must not be treated as reliable on iPhone.
 
 ## Project Structure
 
 ```text
 .
-|-- index.html                  Root redirect to the app
-|-- src/index.html              Static single-page application
-|-- service-worker.js           App shell cache for PWA/offline access
-|-- manifest.webmanifest        PWA metadata
-|-- assets/icons/               PWA icons
-|-- docs/manual_test_plan.md    Manual verification checklist
-|-- docs/product_brief.md       Product scope and v1 boundary
-|-- docs/access_layer_standard.md
-|-- docs/data_privacy.md
-|-- docs/roadmap.md
+|-- index.html                    Root redirect to the current app
+|-- src/index.html                Current V1 static single-page prototype
+|-- service-worker.js             Current app shell cache
+|-- manifest.webmanifest          PWA metadata
+|-- assets/icons/                 PWA icons
+|-- docs/                         Product, architecture, privacy, and test docs
 `-- README.md
 ```
 
-## Development
+## Run Current Prototype Locally
 
-No package manager, framework, backend, database, Docker service, or build step is required.
+No package manager, framework, backend, database, Docker service, or build step is required for the current prototype.
 
 From the repository root:
 
@@ -192,29 +131,35 @@ From the repository root:
 python3 -m http.server 8000
 ```
 
-Then open:
+Open:
 
 ```text
 http://127.0.0.1:8000/
 ```
 
-If port 8000 is in use, choose another port:
+If port 8000 is in use:
 
 ```bash
 python3 -m http.server 8001
 ```
 
-## Deployment
+## Deploy Current Static App
 
 Deploy the repository as static files over HTTPS.
 
 ### GitHub Pages
 
+Current GitHub Pages deployment:
+
+```text
+https://novaai01.github.io/scarlette-interview-recorder/
+```
+
 1. Push the repository to GitHub.
-2. Open repository **Settings > Pages**.
+2. Open repository Settings > Pages.
 3. Set the source to the main branch and repository root.
 4. Wait for Pages to publish.
-5. Add the published URL to the **Live App** section above.
+5. Confirm the published URL matches this README, or update the URL if deployment changes.
 
 ### Cloudflare Pages
 
@@ -222,9 +167,40 @@ Deploy the repository as static files over HTTPS.
 2. Leave the build command empty.
 3. Set the output directory to `/`.
 4. Deploy.
-5. Add the deployed URL to the **Live App** section above.
+5. Record the deployed URL in this README.
 
-## Verification
+## Documentation Index
+
+Current V1 docs:
+
+- [Product Brief](docs/product_brief.md)
+- [Access Layer Standard](docs/access_layer_standard.md)
+- [Data Privacy](docs/data_privacy.md)
+- [Roadmap](docs/roadmap.md)
+- [Manual Test Plan](docs/manual_test_plan.md)
+
+V2 foundation docs:
+
+- [V2 Product Specification](docs/v2_product_spec.md)
+- [V2 Technical Architecture](docs/v2_technical_architecture.md)
+- [V2 Data Model](docs/v2_data_model.md)
+- [V2 Implementation Plan](docs/v2_implementation_plan.md)
+- [V2 Test Strategy](docs/v2_test_strategy.md)
+- [Known Risks](docs/known_risks.md)
+
+Architecture decisions:
+
+- [ADR-0001: Local-First Static PWA](docs/decisions/ADR-0001-local-first-static-pwa.md)
+- [ADR-0002: iPhone Native Dictation First](docs/decisions/ADR-0002-iphone-native-dictation-first.md)
+- [ADR-0003: IndexedDB For Session Archive](docs/decisions/ADR-0003-indexeddb-for-session-archive.md)
+
+## Basic Verification
+
+Hosted smoke test:
+
+```bash
+curl -I https://novaai01.github.io/scarlette-interview-recorder/
+```
 
 Static smoke test:
 
@@ -233,30 +209,18 @@ python3 -m http.server 8000
 curl -I http://127.0.0.1:8000/
 ```
 
-Embedded JavaScript syntax check:
+Embedded JavaScript syntax check for the current prototype:
 
 ```bash
 node -e 'const fs = require("fs"); const html = fs.readFileSync("src/index.html", "utf8"); const match = html.match(/<script>([\s\S]*)<\/script>/); new Function(match[1]); console.log("embedded script parses");'
 ```
 
-Required string checks:
+Documentation inventory:
 
 ```bash
-rg "SpeechRecognition|mainResponse|followUpAnswers|Optional full audio backup|Data Privacy|Access Layer Standard"
+find docs -maxdepth 3 -type f | sort
 ```
 
-Manual verification is required for microphone permission, Web Speech API dictation, PWA install, offline launch, and backup audio playback/download. Use [Manual Test Plan](docs/manual_test_plan.md).
+Manual verification is still required for microphone permission, iPhone native keyboard dictation, PWA install, offline launch, service worker update behavior, storage persistence, and export handling.
 
-## Documentation
-
-- [Product Brief](docs/product_brief.md)
-- [Access Layer Standard](docs/access_layer_standard.md)
-- [Data Privacy](docs/data_privacy.md)
-- [Roadmap](docs/roadmap.md)
-- [Manual Test Plan](docs/manual_test_plan.md)
-
-## Project Status
-
-Status: v1 internal tool, static PWA.
-
-The current priority is reliable structured capture and export. Future work should preserve the v1 boundary unless the product scope is explicitly changed.
+V2 is not ready for real discovery interviews until the V2 release checklist in [docs/v2_test_strategy.md](docs/v2_test_strategy.md) passes on the hosted app, iPhone/Home Screen PWA, offline behavior, storage persistence, audio decision path, and export flows.
