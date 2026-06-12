@@ -179,6 +179,7 @@
       margin: 8px 0 0;
       color: var(--muted);
       font-size: 1rem;
+      overflow-wrap: break-word;
     }
 
     .stack {
@@ -192,6 +193,7 @@
 
     .card,
     .panel {
+      min-width: 0;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--panel);
@@ -215,10 +217,15 @@
     }
 
     .template-top {
+      min-width: 0;
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 12px;
+    }
+
+    .template-top > div {
+      min-width: 0;
     }
 
     .template-title {
@@ -232,6 +239,7 @@
       margin: 5px 0 0;
       color: var(--muted);
       font-size: 0.94rem;
+      overflow-wrap: break-word;
     }
 
     .count-pill,
@@ -268,6 +276,7 @@
 
     .notice {
       display: grid;
+      min-width: 0;
       gap: 6px;
       padding: 12px 14px;
       border: 1px solid #ebca86;
@@ -279,6 +288,11 @@
 
     .notice strong {
       color: #3f2a06;
+    }
+
+    .notice > * {
+      min-width: 0;
+      overflow-wrap: break-word;
     }
 
     .notice.danger {
@@ -524,6 +538,51 @@
       min-height: 108px;
     }
 
+    .dictation-field {
+      display: grid;
+      gap: 8px;
+      margin: -8px;
+      padding: 8px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+    }
+
+    .dictation-field.dictation-active {
+      border-color: #f0b7b7;
+      background: #fff7f7;
+      box-shadow: 0 0 0 3px rgba(180, 33, 37, 0.08);
+    }
+
+    .dictation-field.dictation-active textarea {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(180, 33, 37, 0.12);
+    }
+
+    .dictation-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .dictation-button {
+      flex: 1 1 180px;
+    }
+
+    .dictation-status {
+      flex: 1 1 160px;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .dictation-status.listening {
+      color: var(--danger);
+    }
+
     .recorder-panel {
       display: grid;
       gap: 12px;
@@ -543,6 +602,14 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+    }
+
+    .backup-title {
+      margin: 0 0 6px;
+      color: var(--ink);
+      font-size: 0.96rem;
+      line-height: 1.2;
+      font-weight: 850;
     }
 
     .status-line {
@@ -747,6 +814,35 @@
       display: none !important;
     }
 
+    @media (max-width: 520px) {
+      .app-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      .support-pill {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        overflow: hidden;
+        justify-content: center;
+        text-overflow: ellipsis;
+      }
+
+      .stack > *,
+      .template-grid,
+      .template-grid > *,
+      .notice,
+      .panel,
+      .card {
+        max-width: calc(100vw - 28px);
+      }
+    }
+
     @media (min-width: 720px) {
       .app-shell {
         padding-right: 18px;
@@ -771,6 +867,10 @@
 
       .meta-grid {
         grid-template-columns: 1fr 1fr;
+      }
+
+      .dictation-button {
+        flex: 0 1 auto;
       }
 
       .bottom-bar {
@@ -799,6 +899,7 @@
 
   <script>
     const STORAGE_KEY = "scarlette.interviewRecorder.session.v1";
+    const DICTATION_UNSUPPORTED_MESSAGE = "Speech-to-text is not supported in this browser. Use keyboard dictation or type manually.";
 
     const templates = [
       {
@@ -1064,6 +1165,9 @@
     let activeQuestionIndex = null;
     let activeStartedMs = 0;
     let timerId = null;
+    let speechRecognition = null;
+    let activeDictation = null;
+    let dictationMessage = "";
 
     boot();
 
@@ -1184,7 +1288,7 @@
       const progress = Math.round((questionNumber / total) * 100);
       const canRecord = supportsRecording();
       const status = getRecordingStatus(answer, index);
-      const actionLabel = recording.blob || recording.startedAt ? "Re-record answer" : "Record answer";
+      const actionLabel = recording.blob || recording.startedAt ? "Re-record backup audio" : "Record backup audio";
 
       return `
         <section class="stack">
@@ -1198,45 +1302,71 @@
             <h1 class="question-text">${escapeHtml(answer.question)}</h1>
           </article>
 
-          <section class="recorder-panel ${live ? "recording-live" : ""}">
-            <div class="recording-head">
-              <div class="status-line">
-                <span class="status-dot ${live ? "live" : status.dotClass}" aria-hidden="true"></span>
-                <span>${escapeHtml(live ? "Recording in progress" : status.label)}</span>
-              </div>
-              <div id="recordingTimer" class="timer">${escapeHtml(live ? formatDuration(getLiveDuration()) : formatDuration(recording.durationSeconds || 0))}</div>
-            </div>
-            ${!canRecord ? `<div class="notice danger"><strong>Recording unsupported</strong><span>This browser does not expose MediaRecorder and microphone capture together.</span></div>` : ""}
-            ${recorderMessage ? `<div class="notice danger"><strong>Recording error</strong><span>${escapeHtml(recorderMessage)}</span></div>` : ""}
-            <div class="button-row">
-              <button class="button record" data-action="start-recording" ${live || !canRecord ? "disabled" : ""}>${escapeHtml(actionLabel)}</button>
-              <button class="button stop" data-action="stop-recording" ${live ? "" : "disabled"}>Stop recording</button>
-            </div>
-            ${renderAudioPlayback(answer, index)}
-          </section>
-
           <section class="panel evidence-panel">
-            <div class="field main-response">
+            ${renderDictationNotice()}
+
+            <div class="field main-response dictation-field ${dictationActiveClass(`question-${index}-mainResponse`)}">
               <label for="mainResponse">Main Response</label>
               <textarea id="mainResponse" data-answer-index="${index}" data-evidence-field="mainResponse" placeholder="Capture the full answer or dictated summary here.">${escapeHtml(answer.mainResponse || "")}</textarea>
+              ${renderDictationControls({
+                targetId: `question-${index}-mainResponse`,
+                textareaId: "mainResponse",
+                label: "Main Response",
+                answerIndex: index,
+                evidenceField: "mainResponse"
+              })}
             </div>
 
             <div class="evidence-block">
               <h2 class="evidence-heading">Follow-up Answers</h2>
               <div class="followup-fields">
                 ${answer.followUpAnswers.map((item, followUpIndex) => `
-                  <div class="followup-answer">
+                  <div class="followup-answer dictation-field ${dictationActiveClass(`question-${index}-followUp-${followUpIndex}`)}">
                     <label for="followUpAnswer${followUpIndex}">${escapeHtml(item.prompt)}</label>
                     <textarea id="followUpAnswer${followUpIndex}" data-answer-index="${index}" data-follow-up-index="${followUpIndex}" placeholder="Answer / evidence...">${escapeHtml(item.response || "")}</textarea>
+                    ${renderDictationControls({
+                      targetId: `question-${index}-followUp-${followUpIndex}`,
+                      textareaId: `followUpAnswer${followUpIndex}`,
+                      label: `Follow-up answer: ${item.prompt}`,
+                      answerIndex: index,
+                      followUpIndex
+                    })}
                   </div>
                 `).join("")}
               </div>
             </div>
 
-            <div class="field additional-notes">
+            <div class="field additional-notes dictation-field ${dictationActiveClass(`question-${index}-notes`)}">
               <label for="additionalNotes">Additional Notes</label>
               <textarea id="additionalNotes" data-answer-index="${index}" data-evidence-field="notes" placeholder="Context, observations, names, systems, or follow-up actions.">${escapeHtml(answer.notes || "")}</textarea>
+              ${renderDictationControls({
+                targetId: `question-${index}-notes`,
+                textareaId: "additionalNotes",
+                label: "Additional Notes",
+                answerIndex: index,
+                evidenceField: "notes"
+              })}
             </div>
+          </section>
+
+          <section class="recorder-panel ${live ? "recording-live" : ""}" aria-label="Optional full audio backup">
+            <div class="recording-head">
+              <div>
+                <h2 class="backup-title">Optional full audio backup</h2>
+                <div class="status-line">
+                  <span class="status-dot ${live ? "live" : status.dotClass}" aria-hidden="true"></span>
+                  <span>${escapeHtml(live ? "Backup recording in progress" : status.label)}</span>
+                </div>
+              </div>
+              <div id="recordingTimer" class="timer">${escapeHtml(live ? formatDuration(getLiveDuration()) : formatDuration(recording.durationSeconds || 0))}</div>
+            </div>
+            ${!canRecord ? `<div class="notice danger"><strong>Backup recording unsupported</strong><span>This browser does not expose MediaRecorder and microphone capture together.</span></div>` : ""}
+            ${recorderMessage ? `<div class="notice danger"><strong>Backup recording error</strong><span>${escapeHtml(recorderMessage)}</span></div>` : ""}
+            <div class="button-row">
+              <button class="button record" data-action="start-recording" ${live || !canRecord ? "disabled" : ""}>${escapeHtml(actionLabel)}</button>
+              <button class="button stop" data-action="stop-recording" ${live ? "" : "disabled"}>Stop backup recording</button>
+            </div>
+            ${renderAudioPlayback(answer, index)}
           </section>
 
           <div class="bottom-bar">
@@ -1259,7 +1389,7 @@
           <section class="panel">
             <div class="section-head">
               <h1 class="screen-title">Review evidence</h1>
-              <p class="screen-lede">${recorded} audio file${recorded === 1 ? "" : "s"} available in this browser. ${metadataOnly ? `${metadataOnly} recording metadata entr${metadataOnly === 1 ? "y is" : "ies are"} missing audio after reload.` : ""}</p>
+              <p class="screen-lede">${recorded} backup audio file${recorded === 1 ? "" : "s"} available in this browser. ${metadataOnly ? `${metadataOnly} backup recording metadata entr${metadataOnly === 1 ? "y is" : "ies are"} missing audio after reload.` : ""}</p>
             </div>
             <div class="meta-grid">
               ${renderMeta("Template", template.title)}
@@ -1285,7 +1415,7 @@
             <div class="review-actions">
               <button class="button primary" data-action="export-json">Export JSON</button>
               <button class="button primary" data-action="export-markdown">Export Markdown</button>
-              <button class="button" data-action="download-all-audio">Download all audio</button>
+              <button class="button" data-action="download-all-audio">Download all backup audio</button>
               <button class="button" data-action="clear-session">Clear session</button>
             </div>
           </section>
@@ -1296,7 +1426,7 @@
 
           <div class="bottom-bar">
             <button class="button" data-action="back-to-question">Back to questions</button>
-            <button class="button primary" data-action="download-all-audio">Download audio</button>
+            <button class="button primary" data-action="download-all-audio">Download backup audio</button>
           </div>
         </section>
       `;
@@ -1329,7 +1459,7 @@
           </div>
           <div class="button-row">
             <button class="button small" data-action="jump-question" data-index="${index}">Open question</button>
-            <button class="button small" data-action="download-audio" data-index="${index}" ${answer.recording && answer.recording.blob ? "" : "disabled"}>Download audio</button>
+            <button class="button small" data-action="download-audio" data-index="${index}" ${answer.recording && answer.recording.blob ? "" : "disabled"}>Download backup audio</button>
           </div>
         </article>
       `;
@@ -1361,24 +1491,46 @@
 
     function renderReviewEvidenceEditor(answer, index) {
       return `
-        <div class="field main-response">
+        ${renderDictationNotice()}
+        <div class="field main-response dictation-field ${dictationActiveClass(`review-${index}-mainResponse`)}">
           <label for="reviewMainResponse${index}">Main Response</label>
           <textarea id="reviewMainResponse${index}" data-answer-index="${index}" data-evidence-field="mainResponse" aria-label="Edit main response for question ${index + 1}">${escapeHtml(answer.mainResponse || "")}</textarea>
+          ${renderDictationControls({
+            targetId: `review-${index}-mainResponse`,
+            textareaId: `reviewMainResponse${index}`,
+            label: `Main Response for question ${index + 1}`,
+            answerIndex: index,
+            evidenceField: "mainResponse"
+          })}
         </div>
         <div class="evidence-block">
           <h4 class="evidence-heading">Follow-up Answers</h4>
           <div class="followup-fields">
             ${answer.followUpAnswers.map((item, followUpIndex) => `
-              <div class="followup-answer">
+              <div class="followup-answer dictation-field ${dictationActiveClass(`review-${index}-followUp-${followUpIndex}`)}">
                 <label for="reviewFollowUpAnswer${index}-${followUpIndex}">${escapeHtml(item.prompt)}</label>
                 <textarea id="reviewFollowUpAnswer${index}-${followUpIndex}" data-answer-index="${index}" data-follow-up-index="${followUpIndex}" aria-label="Edit follow-up answer ${followUpIndex + 1} for question ${index + 1}">${escapeHtml(item.response || "")}</textarea>
+                ${renderDictationControls({
+                  targetId: `review-${index}-followUp-${followUpIndex}`,
+                  textareaId: `reviewFollowUpAnswer${index}-${followUpIndex}`,
+                  label: `Follow-up answer ${followUpIndex + 1} for question ${index + 1}`,
+                  answerIndex: index,
+                  followUpIndex
+                })}
               </div>
             `).join("")}
           </div>
         </div>
-        <div class="field additional-notes">
+        <div class="field additional-notes dictation-field ${dictationActiveClass(`review-${index}-notes`)}">
           <label for="reviewAdditionalNotes${index}">Additional Notes</label>
           <textarea id="reviewAdditionalNotes${index}" data-answer-index="${index}" data-evidence-field="notes" aria-label="Edit additional notes for question ${index + 1}">${escapeHtml(answer.notes || "")}</textarea>
+          ${renderDictationControls({
+            targetId: `review-${index}-notes`,
+            textareaId: `reviewAdditionalNotes${index}`,
+            label: `Additional Notes for question ${index + 1}`,
+            answerIndex: index,
+            evidenceField: "notes"
+          })}
         </div>
       `;
     }
@@ -1419,6 +1571,68 @@
       `;
     }
 
+    function renderDictationNotice() {
+      if (!supportsDictation()) {
+        return `
+          <section class="notice danger">
+            <strong>Dictation unavailable</strong>
+            <span>${DICTATION_UNSUPPORTED_MESSAGE}</span>
+          </section>
+        `;
+      }
+
+      if (!dictationMessage) {
+        return "";
+      }
+
+      return `
+        <section class="notice danger">
+          <strong>Dictation message</strong>
+          <span>${escapeHtml(dictationMessage)}</span>
+        </section>
+      `;
+    }
+
+    function renderDictationControls(target) {
+      const supported = supportsDictation();
+      const active = isDictatingTarget(target.targetId);
+      const action = active ? "stop-dictation" : "start-dictation";
+      const label = active ? "Stop dictation" : "Start dictation";
+      const status = active ? "Listening..." : (supported ? "Ready" : "Type manually");
+      const evidenceAttr = target.evidenceField ? ` data-evidence-field="${escapeAttr(target.evidenceField)}"` : "";
+      const followUpAttr = target.followUpIndex !== undefined ? ` data-follow-up-index="${Number(target.followUpIndex)}"` : "";
+
+      return `
+        <div class="dictation-controls">
+          <button
+            class="button dictation-button ${active ? "stop" : ""}"
+            type="button"
+            data-action="${action}"
+            data-dictation-target="${escapeAttr(target.targetId)}"
+            data-textarea-id="${escapeAttr(target.textareaId)}"
+            data-dictation-label="${escapeAttr(target.label)}"
+            data-answer-index="${Number(target.answerIndex)}"${evidenceAttr}${followUpAttr}
+            aria-controls="${escapeAttr(target.textareaId)}"
+            aria-pressed="${active ? "true" : "false"}"
+            ${supported ? "" : "disabled"}
+          >${label}</button>
+          <span id="${escapeAttr(dictationStatusId(target.targetId))}" class="dictation-status ${active ? "listening" : ""}" aria-live="polite">${escapeHtml(status)}</span>
+        </div>
+      `;
+    }
+
+    function dictationActiveClass(targetId) {
+      return isDictatingTarget(targetId) ? "dictation-active" : "";
+    }
+
+    function isDictatingTarget(targetId) {
+      return Boolean(activeDictation && activeDictation.targetId === targetId);
+    }
+
+    function dictationStatusId(targetId) {
+      return `dictationStatus-${String(targetId || "").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+    }
+
     function renderAudioPlayback(answer, index) {
       const recording = answer.recording || emptyRecording();
       if (recording.objectUrl && recording.blob) {
@@ -1426,17 +1640,17 @@
           <div class="stack">
             <audio controls src="${escapeAttr(recording.objectUrl)}"></audio>
             <div class="button-row">
-              <button class="button small" data-action="download-audio" data-index="${index}">Download audio</button>
+              <button class="button small" data-action="download-audio" data-index="${index}">Download backup audio</button>
             </div>
           </div>
         `;
       }
 
       if (recording.startedAt && !recording.blob) {
-        return `<div class="audio-empty">Recording metadata exists, but the audio file is not available after reload. Re-record or use an audio file exported before closing.</div>`;
+        return `<div class="audio-empty">Backup recording metadata exists, but the audio file is not available after reload. Re-record or use an audio file exported before closing.</div>`;
       }
 
-      return `<div class="audio-empty">No audio recorded for this question.</div>`;
+      return `<div class="audio-empty">No backup audio recorded for this question.</div>`;
     }
 
     function handleClick(event) {
@@ -1501,6 +1715,7 @@
         if (blockIfRecording()) {
           return;
         }
+        stopDictation(false);
         screen = "review";
         persistSession();
         render();
@@ -1508,6 +1723,7 @@
       }
 
       if (action === "back-to-question") {
+        stopDictation(false);
         screen = "question";
         session.currentQuestionIndex = clampQuestionIndex(session.currentQuestionIndex);
         persistSession();
@@ -1519,6 +1735,7 @@
         if (blockIfRecording()) {
           return;
         }
+        stopDictation(false);
         session.currentQuestionIndex = clampQuestionIndex(index);
         activeEditIndex = null;
         screen = "question";
@@ -1534,6 +1751,16 @@
 
       if (action === "stop-recording") {
         stopRecording();
+        return;
+      }
+
+      if (action === "start-dictation") {
+        startDictation(button);
+        return;
+      }
+
+      if (action === "stop-dictation") {
+        stopDictation(false, true);
         return;
       }
 
@@ -1558,12 +1785,14 @@
       }
 
       if (action === "edit-note") {
+        stopDictation(false);
         activeEditIndex = index;
         render();
         return;
       }
 
       if (action === "finish-edit-note") {
+        stopDictation(false);
         activeEditIndex = null;
         persistSession();
         render();
@@ -1575,33 +1804,303 @@
         return;
       }
 
-      const detailKey = event.target.dataset.detail;
-      if (detailKey) {
-        session.details[detailKey] = event.target.value;
-        persistSession();
+      if (syncDetailFromElement(event.target)) {
         return;
       }
 
-      const answerIndex = event.target.dataset.answerIndex;
-      const evidenceField = event.target.dataset.evidenceField;
+      syncEvidenceFromElement(event.target);
+    }
+
+    function syncDetailFromElement(element) {
+      if (!element || !session) {
+        return false;
+      }
+
+      const detailKey = element.dataset.detail;
+      if (detailKey) {
+        session.details[detailKey] = element.value;
+        persistSession();
+        return true;
+      }
+
+      return false;
+    }
+
+    function syncEvidenceFromElement(element) {
+      if (!element || !session) {
+        return false;
+      }
+
+      const answerIndex = element.dataset.answerIndex;
+      const evidenceField = element.dataset.evidenceField;
       if (answerIndex !== undefined && evidenceField) {
         const answer = session.answers[Number(answerIndex)];
         if (answer && (evidenceField === "mainResponse" || evidenceField === "notes")) {
-          answer[evidenceField] = event.target.value;
+          answer[evidenceField] = element.value;
           persistSession();
+          return true;
         }
-        return;
+        return false;
       }
 
-      const followUpIndex = event.target.dataset.followUpIndex;
+      const followUpIndex = element.dataset.followUpIndex;
       if (answerIndex !== undefined && followUpIndex !== undefined) {
         const answer = session.answers[Number(answerIndex)];
         const followUpAnswer = answer && answer.followUpAnswers[Number(followUpIndex)];
         if (followUpAnswer) {
-          followUpAnswer.response = event.target.value;
+          followUpAnswer.response = element.value;
           persistSession();
+          return true;
         }
       }
+
+      return false;
+    }
+
+    function startDictation(button) {
+      if (!supportsDictation()) {
+        dictationMessage = DICTATION_UNSUPPORTED_MESSAGE;
+        render();
+        return;
+      }
+
+      if (isRecording()) {
+        dictationMessage = "Stop the optional full audio backup before starting field dictation.";
+        render();
+        return;
+      }
+
+      const target = buildDictationTarget(button);
+      if (!target.targetId || !target.textareaId) {
+        return;
+      }
+
+      if (activeDictation) {
+        stopDictation(false);
+      }
+
+      const Recognition = getSpeechRecognitionConstructor();
+      let recognition = null;
+
+      try {
+        recognition = new Recognition();
+      } catch (error) {
+        dictationMessage = "Speech-to-text could not start in this browser. Use keyboard dictation or type manually.";
+        render();
+        return;
+      }
+
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = navigator.language || "en-GB";
+
+      speechRecognition = recognition;
+      activeDictation = target;
+      dictationMessage = "";
+
+      recognition.addEventListener("result", event => {
+        handleDictationResult(event, recognition);
+      });
+
+      recognition.addEventListener("error", event => {
+        handleDictationError(event, recognition);
+      });
+
+      recognition.addEventListener("end", () => {
+        handleDictationEnd(recognition);
+      });
+
+      try {
+        recognition.start();
+      } catch (error) {
+        speechRecognition = null;
+        activeDictation = null;
+        dictationMessage = "Speech-to-text could not start. Use keyboard dictation or type manually.";
+        render();
+        return;
+      }
+
+      render();
+      focusActiveDictationTextarea();
+      setDictationStatus(target.targetId, "Listening...");
+    }
+
+    function stopDictation(shouldRender, allowFinalResult) {
+      const recognition = speechRecognition;
+
+      if (allowFinalResult && recognition && activeDictation) {
+        setDictationStatus(activeDictation.targetId, "Stopping...");
+        try {
+          recognition.stop();
+        } catch (error) {
+          speechRecognition = null;
+          activeDictation = null;
+          if (shouldRender) {
+            render();
+          }
+        }
+        return;
+      }
+
+      speechRecognition = null;
+      activeDictation = null;
+
+      if (recognition) {
+        try {
+          if (typeof recognition.abort === "function") {
+            recognition.abort();
+          } else {
+            recognition.stop();
+          }
+        } catch (error) {
+          // Some browsers throw if recognition has already stopped.
+        }
+      }
+
+      if (shouldRender) {
+        render();
+      }
+    }
+
+    function buildDictationTarget(button) {
+      return {
+        targetId: button.dataset.dictationTarget || "",
+        textareaId: button.dataset.textareaId || "",
+        label: button.dataset.dictationLabel || "Evidence field",
+        answerIndex: Number(button.dataset.answerIndex),
+        evidenceField: button.dataset.evidenceField || "",
+        followUpIndex: button.dataset.followUpIndex !== undefined ? Number(button.dataset.followUpIndex) : undefined
+      };
+    }
+
+    function handleDictationResult(event, recognition) {
+      if (recognition !== speechRecognition || !activeDictation) {
+        return;
+      }
+
+      let finalTranscript = "";
+      let interimTranscript = "";
+
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const transcript = result && result[0] ? result[0].transcript : "";
+        if (result && result.isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        appendDictationText(finalTranscript);
+      }
+
+      if (!activeDictation) {
+        return;
+      }
+
+      const preview = cleanTranscript(interimTranscript);
+      setDictationStatus(activeDictation.targetId, preview ? `Listening: ${preview}` : "Listening...");
+    }
+
+    function handleDictationError(event, recognition) {
+      if (recognition !== speechRecognition) {
+        return;
+      }
+
+      dictationMessage = dictationErrorMessage(event);
+      stopDictation(true);
+    }
+
+    function handleDictationEnd(recognition) {
+      if (recognition !== speechRecognition) {
+        return;
+      }
+
+      speechRecognition = null;
+      activeDictation = null;
+      render();
+    }
+
+    function appendDictationText(transcript) {
+      const textarea = getActiveDictationTextarea();
+      const text = cleanTranscript(transcript);
+
+      if (!textarea) {
+        stopDictation(true);
+        return;
+      }
+
+      if (!text) {
+        return;
+      }
+
+      const current = textarea.value || "";
+      const separator = appendSeparator(current, text);
+      textarea.value = `${current}${separator}${text}`;
+      focusTextarea(textarea);
+      syncEvidenceFromElement(textarea);
+    }
+
+    function getActiveDictationTextarea() {
+      if (!activeDictation) {
+        return null;
+      }
+      return document.getElementById(activeDictation.textareaId);
+    }
+
+    function focusActiveDictationTextarea() {
+      window.setTimeout(() => {
+        const textarea = getActiveDictationTextarea();
+        if (textarea) {
+          focusTextarea(textarea);
+        }
+      }, 0);
+    }
+
+    function focusTextarea(textarea) {
+      try {
+        textarea.focus({ preventScroll: true });
+      } catch (error) {
+        textarea.focus();
+      }
+      const end = textarea.value.length;
+      textarea.setSelectionRange(end, end);
+    }
+
+    function setDictationStatus(targetId, text) {
+      const status = document.getElementById(dictationStatusId(targetId));
+      if (status) {
+        status.textContent = text;
+      }
+    }
+
+    function cleanTranscript(value) {
+      return String(value || "").replace(/\s+/g, " ").trim();
+    }
+
+    function appendSeparator(current, incoming) {
+      if (!current || /\s$/.test(current) || /^[,.;:!?]/.test(incoming)) {
+        return "";
+      }
+      return " ";
+    }
+
+    function dictationErrorMessage(event) {
+      const error = event && event.error;
+      if (error === "not-allowed" || error === "service-not-allowed") {
+        return "Speech recognition permission was denied. Use keyboard dictation or type manually.";
+      }
+      if (error === "audio-capture") {
+        return "No microphone was found for speech-to-text. Use keyboard dictation or type manually.";
+      }
+      if (error === "no-speech") {
+        return "No speech was detected. Try again or type manually.";
+      }
+      if (error === "network") {
+        return "Speech-to-text is unavailable right now. Use keyboard dictation or type manually.";
+      }
+      return "Speech-to-text stopped. Use keyboard dictation or type manually.";
     }
 
     function createSession(templateId) {
@@ -1636,6 +2135,8 @@
     }
 
     async function startRecording(index) {
+      stopDictation(false);
+
       if (!supportsRecording()) {
         recorderMessage = "This browser does not support the MediaRecorder API with microphone capture.";
         render();
@@ -1643,14 +2144,14 @@
       }
 
       if (isRecording()) {
-        recorderMessage = "Stop the current recording before starting another one.";
+        recorderMessage = "Stop the current backup recording before starting another one.";
         render();
         return;
       }
 
       const answer = session.answers[index];
       const currentRecording = answer.recording || emptyRecording();
-      if ((currentRecording.blob || currentRecording.startedAt) && !confirm("This will replace the existing recording for this question. Continue?")) {
+      if ((currentRecording.blob || currentRecording.startedAt) && !confirm("This will replace the existing backup recording for this question. Continue?")) {
         return;
       }
 
@@ -1674,7 +2175,7 @@
           mediaRecorder = new MediaRecorder(mediaStream);
         } catch (fallbackError) {
           stopMediaStream();
-          recorderMessage = "Recording could not start in this browser.";
+          recorderMessage = "Backup recording could not start in this browser.";
           render();
           return;
         }
@@ -1776,9 +2277,11 @@
       if (blockIfRecording()) {
         return;
       }
+      stopDictation(false);
       const next = clampQuestionIndex(session.currentQuestionIndex + offset);
       session.currentQuestionIndex = next;
       recorderMessage = "";
+      dictationMessage = "";
       persistSession();
       render();
     }
@@ -1787,7 +2290,7 @@
       if (!isRecording()) {
         return false;
       }
-      alert("Stop the current recording before leaving this question.");
+      alert("Stop the current backup recording before leaving this question.");
       return true;
     }
 
@@ -1795,17 +2298,19 @@
       if (blockIfRecording()) {
         return;
       }
-      if (confirm("Clear this interview session? Recordings and evidence in this browser will be removed.")) {
+      if (confirm("Clear this interview session? Backup recordings and evidence in this browser will be removed.")) {
         clearSession(true);
       }
     }
 
     function clearSession(shouldRender) {
+      stopDictation(false);
       revokeObjectUrls();
       session = null;
       screen = "templates";
       activeEditIndex = null;
       recorderMessage = "";
+      dictationMessage = "";
       localStorage.removeItem(STORAGE_KEY);
       if (shouldRender) {
         render();
@@ -1973,7 +2478,7 @@
       lines.push(`- Interview date/time: ${data.interviewDateTime || "Not set"}`);
       lines.push(`- Exported at: ${data.exportedAt}`);
       lines.push("");
-      lines.push("> Audio files are not embedded in this Markdown export. Download available audio files separately before closing or reloading the browser.");
+      lines.push("> Backup audio files are not embedded in this Markdown export. Download available audio files separately before closing or reloading the browser.");
       lines.push("");
       if (data.interviewerNotes) {
         lines.push("## Interviewer notes");
@@ -2035,7 +2540,7 @@
         interviewerNotes: details.interviewerNotes || "",
         startedAt: session.startedAt,
         exportedAt: new Date().toISOString(),
-        audioStorageNotice: "Audio blobs are not stored in localStorage. Download audio files before closing or reloading the browser.",
+        audioStorageNotice: "Backup audio blobs are not stored in localStorage. Download audio files before closing or reloading the browser.",
         answers: session.answers.map((answer, index) => {
           const recording = answer.recording || emptyRecording();
           return {
@@ -2071,7 +2576,7 @@
       const answer = session.answers[index];
       const recording = answer && answer.recording;
       if (!recording || !recording.blob) {
-        alert("No audio file is available for this question in the current browser session.");
+        alert("No backup audio file is available for this question in the current browser session.");
         return;
       }
       downloadBlob(recording.blob, recording.filename || makeAudioFilename(answer, index, recording.mimeType));
@@ -2083,7 +2588,7 @@
         .filter(item => item.answer.recording && item.answer.recording.blob);
 
       if (!available.length) {
-        alert("No audio files are available to download in the current browser session.");
+        alert("No backup audio files are available to download in the current browser session.");
         return;
       }
 
@@ -2119,8 +2624,8 @@
       if (!answer.mainResponse || !answer.mainResponse.trim()) {
         warnings.push("Main response is empty");
       }
-      if (!recording.blob) {
-        warnings.push(recording.startedAt ? "Audio file is missing after reload" : "Recording is missing");
+      if (recording.startedAt && !recording.blob) {
+        warnings.push("Backup audio file is missing after reload");
       }
       return warnings;
     }
@@ -2129,39 +2634,52 @@
       const recording = answer.recording || emptyRecording();
       if (isRecording() && activeQuestionIndex === index) {
         return {
-          label: "Recording",
+          label: "Backup recording",
           dotClass: "live",
           pillClass: "danger"
         };
       }
       if (recording.blob) {
         return {
-          label: `Recorded ${formatDuration(recording.durationSeconds || 0)}`,
+          label: `Backup recorded ${formatDuration(recording.durationSeconds || 0)}`,
           dotClass: "ready",
           pillClass: ""
         };
       }
       if (recording.startedAt) {
         return {
-          label: "Metadata only",
+          label: "Backup metadata only",
           dotClass: "",
           pillClass: "warn"
         };
       }
       return {
-        label: "No recording",
+        label: "No backup audio",
         dotClass: "",
         pillClass: "danger"
       };
     }
 
     function updateSupportStatus() {
-      if (supportsRecording()) {
-        supportStatus.textContent = "Recording supported";
+      const recordingSupported = supportsRecording();
+      const dictationSupported = supportsDictation();
+
+      if (recordingSupported && dictationSupported) {
+        supportStatus.textContent = "Audio + dictation";
         supportStatus.className = "support-pill ok";
+        supportStatus.title = "MediaRecorder and browser speech-to-text are available.";
+      } else if (recordingSupported) {
+        supportStatus.textContent = "Audio supported";
+        supportStatus.className = "support-pill ok";
+        supportStatus.title = DICTATION_UNSUPPORTED_MESSAGE;
+      } else if (dictationSupported) {
+        supportStatus.textContent = "Dictation supported";
+        supportStatus.className = "support-pill ok";
+        supportStatus.title = "Browser speech-to-text is available. Backup audio recording is unavailable.";
       } else {
-        supportStatus.textContent = "Recording unavailable";
+        supportStatus.textContent = "Mic features unavailable";
         supportStatus.className = "support-pill bad";
+        supportStatus.title = DICTATION_UNSUPPORTED_MESSAGE;
       }
     }
 
@@ -2171,6 +2689,14 @@
 
     function supportsRecording() {
       return Boolean(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    }
+
+    function supportsDictation() {
+      return Boolean(getSpeechRecognitionConstructor());
+    }
+
+    function getSpeechRecognitionConstructor() {
+      return window.SpeechRecognition || window.webkitSpeechRecognition || null;
     }
 
     function registerServiceWorker() {
@@ -2211,13 +2737,19 @@
     function handleBeforeUnload(event) {
       if (isRecording()) {
         event.preventDefault();
-        event.returnValue = "Stop the current recording before leaving.";
+        event.returnValue = "Stop the current backup recording before leaving.";
+        return event.returnValue;
+      }
+
+      if (activeDictation) {
+        event.preventDefault();
+        event.returnValue = "Stop dictation before leaving.";
         return event.returnValue;
       }
 
       if (hasAudioBlobs()) {
         event.preventDefault();
-        event.returnValue = "Download audio recordings before closing. Audio blobs are not reliably restored after reload.";
+        event.returnValue = "Download backup audio before closing. Audio blobs are not reliably restored after reload.";
         return event.returnValue;
       }
       return undefined;

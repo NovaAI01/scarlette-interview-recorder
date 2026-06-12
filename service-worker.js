@@ -1,4 +1,4 @@
-const CACHE_NAME = "scarlette-interview-recorder-v3";
+const CACHE_NAME = "scarlette-interview-recorder-v4";
 const APP_SHELL = [
   "./",
   "./index.html",

@@ -1,152 +1,262 @@
 # Scarlette Interview Recorder
 
-Scarlette Interview Recorder is a static Progressive Web App for capturing raw evidence during business workflow discovery interviews. The interviewer selects a prepared template, records one spoken answer for each question, captures structured written evidence, reviews missing evidence, and exports the session for later review.
+Scarlette Interview Recorder is a static Progressive Web App for capturing structured interview evidence during business workflow discovery.
 
-This app deliberately does not analyse, summarise, score, transcribe, upload, or extract insights. It only captures interview evidence on the user's device.
+The app is designed for internal Scarlette discovery work. It prioritises reliable raw capture, local storage, review, and export. It does not add backend services, cloud transcription, AI extraction, scoring, proposal generation, or account-based storage.
 
-## User Mode
+## Live App
 
-Use the hosted app like a normal application:
-
-1. Open the hosted Scarlette Interview Recorder URL.
-2. Install the app from the browser.
-3. Launch Scarlette Interview Recorder from the application icon.
-4. Capture and export interview evidence.
-
-Users do not need a terminal, localhost URL, port number, development command, background process, backend service, database, Docker container, or build tool.
-
-The root hosted URL opens the app automatically. The direct app path is also available at `/src/`.
-
-## Install On Desktop
-
-Use a desktop browser that supports installing PWAs, such as Chrome, Edge, or Brave.
-
-1. Open the hosted Scarlette Interview Recorder URL.
-2. Use the browser install control, usually shown in the address bar or browser menu as **Install app**.
-3. Confirm installation.
-4. Launch **Scarlette Interview Recorder** from the operating system applications menu, start menu, dock, or launcher.
-
-Expected desktop flow:
+Live app URL:
 
 ```text
-Applications Menu
-  -> Scarlette Interview Recorder
-  -> Application Opens
+TODO: add deployed HTTPS URL
 ```
 
-## Install On iPhone
+Direct app path after deployment:
 
-Use Safari on iPhone.
+```text
+/src/
+```
 
-1. Open the hosted Scarlette Interview Recorder URL in Safari.
-2. Tap **Share**.
-3. Tap **Add to Home Screen**.
-4. Confirm the name.
-5. Launch **Scarlette** from the Home Screen.
+## Screenshot
 
-## Install On Android
+Screenshot placeholder:
 
-Use Chrome, Edge, or another Android browser with PWA install support.
+```text
+TODO: add current desktop and mobile screenshots after deployment verification.
+```
+
+## Current Capabilities
+
+- Template-based discovery interviews for HR, shop floor, manager, and maintenance workflows.
+- Structured evidence fields for Main Response, Follow-up Answers, and Additional Notes.
+- Field-level browser dictation controls for editable evidence fields when `SpeechRecognition` or `webkitSpeechRecognition` is available.
+- Manual typing and device keyboard dictation fallback when browser speech recognition is unavailable.
+- Optional full-question MediaRecorder audio backup.
+- Local autosave of interview details, progress, structured evidence, dictated text, and recording metadata in `localStorage`.
+- Review screen with missing evidence warnings.
+- JSON and Markdown export.
+- Individual and batch download of available backup audio blobs.
+- Static PWA installation on supported desktop and mobile browsers.
+- Offline app shell after the first successful hosted load.
+
+## Deliberately Out Of Scope
+
+- Backend services, databases, accounts, authentication, and server-side storage.
+- Cloud transcription, AI transcription, AI extraction, scoring, summaries, or proposal generation.
+- Cross-device sync or account recovery.
+- Package managers, build tools, frameworks, Docker services, or long-running local processes for normal use.
+- Permanent storage of audio blobs after reload or browser close.
+
+See [Product Brief](docs/product_brief.md) and [Roadmap](docs/roadmap.md) for the v1 product boundary.
+
+## User Workflow
 
 1. Open the hosted Scarlette Interview Recorder URL.
-2. Tap the browser install prompt or open the browser menu and tap **Install app**.
-3. Confirm installation.
-4. Launch **Scarlette** from the Home Screen or app launcher.
+2. Install the app if using it repeatedly on desktop or phone.
+3. Select the relevant discovery template.
+4. Enter interview details.
+5. Capture each question using structured evidence fields.
+6. Use field-level dictation where supported, or type/use keyboard dictation manually.
+7. Optionally record a full audio backup for the question.
+8. Review missing evidence warnings.
+9. Export JSON, Markdown, and any available backup audio before closing or reloading.
 
-## Offline Behaviour
+## Install And Use
 
-After the first successful hosted load, the service worker caches the static application shell:
+### Desktop
 
-- root launcher page
-- app page
-- interview templates
-- manifest
-- app icons
-- previously loaded static assets
+Use a browser with PWA installation support, such as Chrome, Edge, or Brave.
 
-Local interview details, structured evidence fields, question progress, and recording metadata are stored in `localStorage`, so the active session can continue offline in the same browser profile.
+1. Open the hosted HTTPS URL.
+2. Use the browser install control, usually shown in the address bar or browser menu.
+3. Launch **Scarlette Interview Recorder** from the operating system application menu, dock, or launcher.
 
-The app has no backend dependency. It does not upload, sync, or permanently store interview data outside the user's browser.
+### iPhone
 
-## Limitations
+Use Safari.
 
-Audio recording requires:
+1. Open the hosted HTTPS URL.
+2. Tap **Share**.
+3. Tap **Add to Home Screen**.
+4. Launch **Scarlette** from the Home Screen.
 
-- HTTPS hosting, or localhost only during development
-- browser support for `MediaRecorder`
-- browser support for `navigator.mediaDevices.getUserMedia`
+If the browser does not expose Web Speech API dictation, tap inside the textarea and use the iPhone keyboard microphone dictation button.
+
+### Android
+
+Use Chrome, Edge, or another browser with PWA installation support.
+
+1. Open the hosted HTTPS URL.
+2. Use the browser install prompt or browser menu.
+3. Launch **Scarlette** from the Home Screen or app launcher.
+
+## Field-Level Dictation
+
+Every editable evidence textarea has its own dictation control:
+
+- Main Response
+- each Follow-up Answer
+- Additional Notes
+
+Support is detected with:
+
+```js
+window.SpeechRecognition || window.webkitSpeechRecognition
+```
+
+When supported, **Start dictation** listens for the selected field only. Final recognized speech is appended to the existing textarea value, the text remains editable, and the updated field is persisted to `localStorage` immediately.
+
+Starting dictation for another field stops the active field first. The active field is visually highlighted and the control changes to **Stop dictation**.
+
+When unsupported, the app shows:
+
+```text
+Speech-to-text is not supported in this browser. Use keyboard dictation or type manually.
+```
+
+All textareas remain usable manually.
+
+## Optional Full Audio Backup
+
+The MediaRecorder control is retained below the evidence fields as **Optional full audio backup**.
+
+This backup records the full-question audio for later reference. It is separate from structured evidence entry and is not required for export. Backup audio blobs are held in memory by the current browser session and should be downloaded before closing or reloading.
+
+## Privacy And Data Storage
+
+The application code may be public. Interview data is not sent to a Scarlette backend by this app.
+
+Stored locally in the browser profile:
+
+- interview details
+- selected template and current question
+- structured evidence fields
+- dictated text once inserted into textareas
+- recording metadata
+
+Not stored permanently by the app:
+
+- backup audio blob contents after browser reload or close
+- exported files after the browser hands them to the user
+
+Users are responsible for handling exported JSON, Markdown, and audio files according to the sensitivity of the interview.
+
+See [Data Privacy](docs/data_privacy.md) for the full privacy position.
+
+## Browser Limitations
+
+Field-level speech-to-text depends on browser support for Web Speech API recognition. Support varies by browser, device, installed PWA context, permissions, and network/runtime conditions. Browser speech recognition may be unavailable even when microphone recording is available.
+
+Optional backup audio recording requires:
+
+- HTTPS hosting, or localhost during development
+- `MediaRecorder`
+- `navigator.mediaDevices.getUserMedia`
 - microphone permission
 
-Large audio blobs are kept as in-memory Blob/Object URL files during the active browser session. Download audio files before closing or reloading the page. After reload, the app can show saved recording metadata, but the actual audio file may no longer be available.
+Offline mode applies to the cached app shell and local session metadata. It does not make unavailable browser speech recognition available, and it does not restore audio blobs after reload.
 
-Data is local to the browser profile and device. There is no cross-device sync or account recovery.
+## Access Layer
 
-## Development Mode
+Normal users should access Scarlette Interview Recorder through the hosted PWA. They should not need a terminal, local server, package manager, Docker, build command, or background service.
 
-Development mode is only for local testing and editing. It is not required for normal user operation.
+Local server use is only for development and manual verification.
+
+See [Access Layer Standard](docs/access_layer_standard.md).
+
+## Project Structure
+
+```text
+.
+|-- index.html                  Root redirect to the app
+|-- src/index.html              Static single-page application
+|-- service-worker.js           App shell cache for PWA/offline access
+|-- manifest.webmanifest        PWA metadata
+|-- assets/icons/               PWA icons
+|-- docs/manual_test_plan.md    Manual verification checklist
+|-- docs/product_brief.md       Product scope and v1 boundary
+|-- docs/access_layer_standard.md
+|-- docs/data_privacy.md
+|-- docs/roadmap.md
+`-- README.md
+```
+
+## Development
 
 No package manager, framework, backend, database, Docker service, or build step is required.
 
-From the repository root, run either:
+From the repository root:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-or:
-
-```bash
-npx serve
-```
-
-Then open the local app URL shown by the server. For the Python server, use:
+Then open:
 
 ```text
 http://127.0.0.1:8000/
 ```
 
-The root page redirects to `/src/`, matching hosted user mode.
+If port 8000 is in use, choose another port:
+
+```bash
+python3 -m http.server 8001
+```
 
 ## Deployment
 
-The application must be deployed as static files over HTTPS. Commit and publish the repository contents as-is.
+Deploy the repository as static files over HTTPS.
 
 ### GitHub Pages
 
-1. Push this repository to GitHub.
-2. In the repository settings, open **Pages**.
+1. Push the repository to GitHub.
+2. Open repository **Settings > Pages**.
 3. Set the source to the main branch and repository root.
 4. Wait for Pages to publish.
-5. Open the published root URL, for example:
-
-```text
-https://YOUR-USER.github.io/scarlette-interview-recorder/
-```
+5. Add the published URL to the **Live App** section above.
 
 ### Cloudflare Pages
 
 1. Create a Cloudflare Pages project from this repository.
 2. Leave the build command empty.
 3. Set the output directory to `/`.
-4. Deploy the project.
-5. Open the deployed root URL, for example:
+4. Deploy.
+5. Add the deployed URL to the **Live App** section above.
 
-```text
-https://scarlette-interview-recorder.pages.dev/
+## Verification
+
+Static smoke test:
+
+```bash
+python3 -m http.server 8000
+curl -I http://127.0.0.1:8000/
 ```
 
-## Verification Checklist
+Embedded JavaScript syntax check:
 
-Use a hosted HTTPS deployment for end-user verification:
+```bash
+node -e 'const fs = require("fs"); const html = fs.readFileSync("src/index.html", "utf8"); const match = html.match(/<script>([\s\S]*)<\/script>/); new Function(match[1]); console.log("embedded script parses");'
+```
 
-1. Open the hosted root URL without running any local server.
-2. Confirm the app opens from the root URL and redirects into the recorder.
-3. Install the app on desktop and launch it from the application icon.
-4. Install the app on iPhone with **Add to Home Screen** and launch it from the Home Screen.
-5. Install the app on Android with **Install app** and launch it from the Home Screen.
-6. Start a session, enter structured evidence, refresh the page, and confirm the session persists.
-7. Turn off network access after the first successful load and confirm the app shell and templates still open.
-8. Export JSON, Markdown, and available audio before closing or reloading after recording.
-9. Confirm no backend, database, API server, Docker container, or permanent local service is required.
+Required string checks:
 
-See [docs/manual_test_plan.md](docs/manual_test_plan.md) for the full functional checklist.
+```bash
+rg "SpeechRecognition|mainResponse|followUpAnswers|Optional full audio backup|Data Privacy|Access Layer Standard"
+```
+
+Manual verification is required for microphone permission, Web Speech API dictation, PWA install, offline launch, and backup audio playback/download. Use [Manual Test Plan](docs/manual_test_plan.md).
+
+## Documentation
+
+- [Product Brief](docs/product_brief.md)
+- [Access Layer Standard](docs/access_layer_standard.md)
+- [Data Privacy](docs/data_privacy.md)
+- [Roadmap](docs/roadmap.md)
+- [Manual Test Plan](docs/manual_test_plan.md)
+
+## Project Status
+
+Status: v1 internal tool, static PWA.
+
+The current priority is reliable structured capture and export. Future work should preserve the v1 boundary unless the product scope is explicitly changed.
